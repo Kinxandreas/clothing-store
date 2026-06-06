@@ -4,8 +4,8 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
 export const metadata: Metadata = {
-  title: 'KSTORE — Premium Clothing',
-  description: 'Curated clothing for every mood, every moment.',
+  title: 'KINX — Men\'s Streetwear',
+  description: 'Bold streetwear for men. Clothes, hats and accessories built for the streets.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -23,9 +23,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <span key={i} className="eyebrow text-white/50 px-14">
                 FREE SHIPPING ON ORDERS OVER €80
                 &nbsp;&nbsp;·&nbsp;&nbsp;
-                NEW ARRIVALS EVERY WEEK
+                NEW DROPS EVERY WEEK
                 &nbsp;&nbsp;·&nbsp;&nbsp;
-                KSTORE — CYPRUS
+                KINX — CYPRUS STREETWEAR
               </span>
             ))}
           </div>

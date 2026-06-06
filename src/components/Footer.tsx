@@ -8,8 +8,8 @@ export default function Footer() {
       <div className="bg-stone-100 px-6 md:px-10 py-14">
         <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-8">
           <div>
-            <span className="eyebrow text-stone-500 block mb-2">Stay Updated</span>
-            <p className="display" style={{ fontSize: 'clamp(1.5rem, 3vw, 2.2rem)' }}>Join the community</p>
+            <span className="eyebrow text-stone-500 block mb-2">Stay in the Loop</span>
+            <p className="display" style={{ fontSize: 'clamp(1.5rem, 3vw, 2.2rem)' }}>New drops. First access.</p>
           </div>
           <form className="flex gap-0 max-w-md w-full" onSubmit={e => e.preventDefault()}>
             <input
@@ -29,12 +29,11 @@ export default function Footer() {
       <div className="max-w-[1400px] mx-auto px-6 md:px-10 py-14 grid grid-cols-2 md:grid-cols-5 gap-10">
         {/* Brand */}
         <div className="col-span-2">
-          <Link href="/" className="display tracking-[0.2em] text-2xl block mb-5">KSTORE</Link>
+          <Link href="/" className="display tracking-[0.28em] text-2xl block mb-5">KINX</Link>
           <p className="text-[13px] text-stone-400 leading-relaxed max-w-[220px] font-light">
-            Premium clothing curated for every mood and moment. Based in Cyprus.
+            Men&apos;s streetwear from Cyprus. Clothes, hats and accessories for those who move with purpose.
           </p>
           <div className="flex items-center gap-4 mt-6">
-            {/* Instagram icon */}
             <a href="#" aria-label="Instagram" className="text-stone-400 hover:text-ink transition-colors">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <rect x="2" y="2" width="20" height="20" rx="5" />
@@ -42,7 +41,6 @@ export default function Footer() {
                 <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
               </svg>
             </a>
-            {/* Facebook icon */}
             <a href="#" aria-label="Facebook" className="text-stone-400 hover:text-ink transition-colors">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" />
@@ -55,7 +53,12 @@ export default function Footer() {
         <div>
           <span className="eyebrow text-stone-400 block mb-5">Shop</span>
           <ul className="space-y-3">
-            {([['New Arrivals', '/shop'], ['Men', '/shop?gender=men'], ['Women', '/shop?gender=women'], ['Kids', '/shop?gender=kids']] as [string, string][]).map(([l, h]) => (
+            {([
+              ['New Arrivals', '/shop'],
+              ['Clothing', '/shop?category=clothing'],
+              ['Hats', '/shop?category=hats'],
+              ['Keychains', '/shop?category=keychains'],
+            ] as [string, string][]).map(([l, h]) => (
               <li key={l}><Link href={h} className="text-[13px] text-stone-500 hover:text-ink transition-colors font-light link-underline">{l}</Link></li>
             ))}
           </ul>
@@ -76,7 +79,7 @@ export default function Footer() {
           <span className="eyebrow text-stone-400 block mb-5">Contact</span>
           <ul className="space-y-3 text-[13px] text-stone-500 font-light">
             <li>Nicosia, Cyprus</li>
-            <li><a href="mailto:info@kstore.cy" className="hover:text-ink transition-colors">info@kstore.cy</a></li>
+            <li><a href="mailto:info@kinx.cy" className="hover:text-ink transition-colors">info@kinx.cy</a></li>
             <li>Mon–Sat 9am–7pm</li>
           </ul>
         </div>
@@ -85,7 +88,7 @@ export default function Footer() {
       {/* Bottom */}
       <div className="border-t border-stone-200 px-6 md:px-10 py-5">
         <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row justify-between items-center gap-3">
-          <p className="eyebrow text-stone-400">&copy; {new Date().getFullYear()} KSTORE. All rights reserved.</p>
+          <p className="eyebrow text-stone-400">&copy; {new Date().getFullYear()} KINX. All rights reserved.</p>
           <div className="flex gap-8">
             {['Privacy Policy', 'Terms of Use', 'Cookie Policy'].map(l => (
               <Link key={l} href="/" className="eyebrow text-stone-400 hover:text-ink transition-colors">{l}</Link>

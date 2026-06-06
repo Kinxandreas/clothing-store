@@ -46,10 +46,10 @@ export default function Navbar() {
   };
 
   const navLinks: [string, string][] = [
-    ['Shop', '/shop'],
-    ['Men', '/shop?gender=men'],
-    ['Women', '/shop?gender=women'],
-    ['Kids', '/shop?gender=kids'],
+    ['Shop All', '/shop'],
+    ['Clothing', '/shop?category=clothing'],
+    ['Hats', '/shop?category=hats'],
+    ['Keychains', '/shop?category=keychains'],
   ];
 
   return (
@@ -88,13 +88,13 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link href="/" className="flex justify-center col-start-2">
-            <span className="display tracking-[0.22em] text-[1.35rem] text-ink select-none">KSTORE</span>
+            <span className="display tracking-[0.28em] text-[1.4rem] text-ink select-none">KINX</span>
           </Link>
 
           {/* Right icons */}
           <div className="flex items-center justify-end gap-5">
 
-            {/* Account — dropdown when logged in, link to /login otherwise */}
+            {/* Account */}
             <div className="relative">
               {user ? (
                 <>
