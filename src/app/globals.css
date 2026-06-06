@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&f[]=cabinet-grotesk@700,800&display=swap');
+
+:root {
+  --font-body: 'Satoshi', sans-serif;
+  --font-display: 'Cabinet Grotesk', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: #f9f8f5;
+  color: #28251d;
+  min-height: 100dvh;
+}
+
+::selection {
+  background: rgba(1, 105, 111, 0.2);
+  color: #28251d;
+}
+
+:focus-visible {
+  outline: 2px solid #01696f;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
