@@ -9,33 +9,30 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-body)', 'sans-serif'],
+        sans:    ['var(--font-body)', 'sans-serif'],
         display: ['var(--font-display)', 'serif'],
+        mono:    ['var(--font-mono)', 'monospace'],
       },
       colors: {
-        brand: {
-          50:  '#faf9f7',
-          100: '#f4f2ee',
-          200: '#e8e4dc',
-          300: '#c8c2b6',
-          400: '#a09890',
-          500: '#7a7268',
-          600: '#5a5248',
-          700: '#3d3830',
-          800: '#252118',
-          900: '#141210',
+        ink:   '#0f0e0c',
+        paper: '#fafaf8',
+        stone: {
+          50:  '#fafaf8',
+          100: '#f4f3f0',
+          200: '#e8e7e2',
+          300: '#ccc9c0',
+          400: '#a8a49a',
+          500: '#827e74',
+          600: '#5e5b52',
+          700: '#3e3c35',
+          800: '#232118',
+          900: '#0f0e0c',
         },
-        cream: '#faf9f7',
-        charcoal: '#1a1916',
-        accent: {
-          DEFAULT: '#b8a082',
-          hover:   '#a08c6e',
-          dark:    '#8a7358',
-        },
-        gold: '#c9a96e',
+        accent: '#c8a96e',
+        sand:   '#e8e3d8',
       },
-      letterSpacing: {
-        widest2: '0.25em',
+      fontSize: {
+        '2xs': ['0.625rem', { letterSpacing: '0.15em', lineHeight: '1' }],
       },
     },
   },

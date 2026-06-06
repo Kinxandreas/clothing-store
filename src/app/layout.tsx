@@ -17,19 +17,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         {/* Announcement bar */}
-        <div className="bg-charcoal text-white overflow-hidden" style={{ height: '36px' }}>
-          <div className="flex items-center h-full">
-            <div className="marquee-track flex whitespace-nowrap gap-0">
-              {Array(8).fill(null).map((_, i) => (
-                <span key={i} className="label text-white/70 px-12">
-                  FREE SHIPPING ON ORDERS OVER €80 &nbsp;·&nbsp; NEW COLLECTION AVAILABLE NOW &nbsp;·&nbsp; KSTORE CYPRUS
-                </span>
-              ))}
-            </div>
+        <div style={{ background: '#0f0e0c', height: '34px', overflow: 'hidden' }} className="flex items-center">
+          <div className="marquee flex whitespace-nowrap">
+            {Array(6).fill(null).map((_, i) => (
+              <span key={i} className="eyebrow text-white/50 px-14">
+                FREE SHIPPING ON ORDERS OVER €80
+                &nbsp;&nbsp;·&nbsp;&nbsp;
+                NEW ARRIVALS EVERY WEEK
+                &nbsp;&nbsp;·&nbsp;&nbsp;
+                KSTORE — CYPRUS
+              </span>
+            ))}
           </div>
         </div>
         <Navbar />
-        <main className="min-h-screen">{children}</main>
+        <main>{children}</main>
         <Footer />
       </body>
     </html>
