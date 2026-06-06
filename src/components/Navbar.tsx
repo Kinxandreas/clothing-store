@@ -2,11 +2,17 @@
 import Link from 'next/link';
 import { useCartStore } from '@/store/cart';
 import { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import type { User } from '@supabase/supabase-js';
+import { useRouter } from 'next/navigation';
 
 export default function Navbar() {
   const totalItems = useCartStore(state => state.totalItems);
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 40);
@@ -14,7 +20,37 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handler);
   }, []);
 
-  const navLinks = [['Shop', '/shop'], ['Men', '/shop?gender=men'], ['Women', '/shop?gender=women'], ['Kids', '/shop?gender=kids']];
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!accountOpen) return;
+    const close = () => setAccountOpen(false);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [accountOpen]);
+
+  const handleSignOut = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    setUser(null);
+    setAccountOpen(false);
+    router.push('/');
+    router.refresh();
+  };
+
+  const navLinks: [string, string][] = [
+    ['Shop', '/shop'],
+    ['Men', '/shop?gender=men'],
+    ['Women', '/shop?gender=women'],
+    ['Kids', '/shop?gender=kids'],
+  ];
 
   return (
     <>
@@ -23,7 +59,7 @@ export default function Navbar() {
       }`}>
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 h-[60px] grid grid-cols-3 items-center">
 
-          {/* Left */}
+          {/* Left nav links */}
           <div className="hidden md:flex items-center gap-9">
             {navLinks.map(([label, href]) => (
               <Link key={href} href={href}
@@ -52,20 +88,63 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link href="/" className="flex justify-center col-start-2">
-            <span className="display tracking-[0.22em] text-[1.35rem] text-ink select-none">
-              KSTORE
-            </span>
+            <span className="display tracking-[0.22em] text-[1.35rem] text-ink select-none">KSTORE</span>
           </Link>
 
           {/* Right icons */}
           <div className="flex items-center justify-end gap-5">
-            <Link href="/login" aria-label="Account"
-              className="text-stone-500 hover:text-ink transition-colors duration-200">
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
-                <circle cx="12" cy="8" r="4" />
-                <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-              </svg>
-            </Link>
+
+            {/* Account — dropdown when logged in, link to /login otherwise */}
+            <div className="relative">
+              {user ? (
+                <>
+                  <button
+                    onClick={e => { e.stopPropagation(); setAccountOpen(v => !v); }}
+                    aria-label="Account menu"
+                    className="text-stone-500 hover:text-ink transition-colors duration-200"
+                  >
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
+                      <circle cx="12" cy="8" r="4" />
+                      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+                    </svg>
+                  </button>
+
+                  {accountOpen && (
+                    <div
+                      className="absolute right-0 top-8 w-48 bg-paper border border-stone-200 shadow-lg z-50"
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <div className="px-4 py-3 border-b border-stone-100">
+                        <p className="eyebrow text-stone-400 truncate text-xs">{user.email}</p>
+                      </div>
+                      <Link
+                        href="/orders"
+                        onClick={() => setAccountOpen(false)}
+                        className="block px-4 py-3 eyebrow text-stone-600 hover:text-ink hover:bg-stone-50 transition-colors text-xs"
+                      >
+                        My Orders
+                      </Link>
+                      <button
+                        onClick={handleSignOut}
+                        className="w-full text-left px-4 py-3 eyebrow text-stone-400 hover:text-red-500 hover:bg-stone-50 transition-colors text-xs border-t border-stone-100"
+                      >
+                        Sign Out
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <Link href="/login" aria-label="Sign in"
+                  className="text-stone-500 hover:text-ink transition-colors duration-200">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
+                    <circle cx="12" cy="8" r="4" />
+                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+                  </svg>
+                </Link>
+              )}
+            </div>
+
+            {/* Cart */}
             <Link href="/cart" aria-label="Cart"
               className="relative text-stone-500 hover:text-ink transition-colors duration-200">
               <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
@@ -95,6 +174,27 @@ export default function Navbar() {
               {label}
             </Link>
           ))}
+          {user ? (
+            <>
+              <Link href="/orders" onClick={() => setMenuOpen(false)}
+                className="display text-[2.4rem] text-ink py-4 border-b border-stone-200 hover:text-accent transition-colors"
+                style={{ transitionDelay: menuOpen ? '240ms' : '0ms' }}>
+                Orders
+              </Link>
+              <button
+                onClick={() => { handleSignOut(); setMenuOpen(false); }}
+                className="display text-[2.4rem] text-stone-400 py-4 text-left hover:text-red-500 transition-colors"
+                style={{ transitionDelay: menuOpen ? '300ms' : '0ms' }}>
+                Sign Out
+              </button>
+            </>
+          ) : (
+            <Link href="/login" onClick={() => setMenuOpen(false)}
+              className="display text-[2.4rem] text-ink py-4 border-b border-stone-200 hover:text-accent transition-colors"
+              style={{ transitionDelay: menuOpen ? '240ms' : '0ms' }}>
+              Sign In
+            </Link>
+          )}
         </div>
       </div>
     </>
