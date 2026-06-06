@@ -1,3 +1,4 @@
+'use client';
 import Link from 'next/link';
 
 export default function Footer() {
@@ -54,7 +55,7 @@ export default function Footer() {
         <div>
           <span className="eyebrow text-stone-400 block mb-5">Shop</span>
           <ul className="space-y-3">
-            {[['New Arrivals', '/shop'], ['Men', '/shop?gender=men'], ['Women', '/shop?gender=women'], ['Kids', '/shop?gender=kids']].map(([l, h]) => (
+            {([['New Arrivals', '/shop'], ['Men', '/shop?gender=men'], ['Women', '/shop?gender=women'], ['Kids', '/shop?gender=kids']] as [string, string][]).map(([l, h]) => (
               <li key={l}><Link href={h} className="text-[13px] text-stone-500 hover:text-ink transition-colors font-light link-underline">{l}</Link></li>
             ))}
           </ul>
@@ -84,7 +85,7 @@ export default function Footer() {
       {/* Bottom */}
       <div className="border-t border-stone-200 px-6 md:px-10 py-5">
         <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row justify-between items-center gap-3">
-          <p className="eyebrow text-stone-400">© {new Date().getFullYear()} KSTORE. All rights reserved.</p>
+          <p className="eyebrow text-stone-400">&copy; {new Date().getFullYear()} KSTORE. All rights reserved.</p>
           <div className="flex gap-8">
             {['Privacy Policy', 'Terms of Use', 'Cookie Policy'].map(l => (
               <Link key={l} href="/" className="eyebrow text-stone-400 hover:text-ink transition-colors">{l}</Link>
