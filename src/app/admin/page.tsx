@@ -446,16 +446,31 @@ export default function AdminPage() {
                 {/* Price row */}
                 <div className="grid grid-cols-2 gap-4">
                   <Field label="Selling Price (€)">
-                    <input type="number" step="0.01" min="0" required value={productForm.price}
-                      onChange={e => setProductForm({ ...productForm, price: e.target.value })}
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      required
+                      value={productForm.price}
+                      onChange={e => {
+                        const v = e.target.value;
+                        if (/^(\d*\.?\d*)$/.test(v)) setProductForm({ ...productForm, price: v });
+                      }}
                       placeholder="0.00"
-                      className={inputCls} />
+                      className={inputCls}
+                    />
                   </Field>
                   <Field label="Our Cost (€)" hint="— private">
-                    <input type="number" step="0.01" min="0" value={productForm.cost_price}
-                      onChange={e => setProductForm({ ...productForm, cost_price: e.target.value })}
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={productForm.cost_price}
+                      onChange={e => {
+                        const v = e.target.value;
+                        if (/^(\d*\.?\d*)$/.test(v)) setProductForm({ ...productForm, cost_price: v });
+                      }}
                       placeholder="0.00"
-                      className={`${inputCls} border-amber-200 bg-amber-50 focus:border-amber-400`} />
+                      className={`${inputCls} border-amber-200 bg-amber-50 focus:border-amber-400`}
+                    />
                   </Field>
                 </div>
 
