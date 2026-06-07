@@ -1,35 +1,11 @@
 'use client';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useCartStore } from '@/store/cart';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
-
-function KinxLogo() {
-  return (
-    <svg
-      width="42"
-      height="16"
-      viewBox="0 0 42 16"
-      fill="none"
-      aria-label="KINX"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <text
-        x="0"
-        y="13"
-        fontFamily="'Georgia', 'Times New Roman', serif"
-        fontSize="14"
-        fontWeight="700"
-        letterSpacing="2"
-        fill="currentColor"
-      >
-        KINX
-      </text>
-    </svg>
-  );
-}
 
 export default function Navbar() {
   const totalItems = useCartStore(state => state.totalItems);
@@ -85,8 +61,15 @@ export default function Navbar() {
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 h-[60px] flex items-center">
 
           {/* Logo — left */}
-          <Link href="/" className="flex-shrink-0 flex items-center text-ink">
-            <KinxLogo />
+          <Link href="/" className="flex-shrink-0 flex items-center">
+            <Image
+              src="/kinx-logo.svg"
+              alt="KINX"
+              width={60}
+              height={36}
+              className="object-contain"
+              priority
+            />
           </Link>
 
           {/* Nav links — centered absolutely so they stay truly centered */}
