@@ -39,6 +39,17 @@ function Pill({ label, color }: { label: string; color: 'green' | 'stone' | 'amb
   return <span className={`inline-flex items-center px-2 py-0.5 text-[11px] font-medium tracking-wide uppercase border ${cls}`}>{label}</span>;
 }
 
+function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
+  return (
+    <div>
+      <label className="block text-xs font-semibold uppercase tracking-widest text-stone-500 mb-2">
+        {label}{hint && <span className="ml-2 normal-case font-normal text-stone-400">{hint}</span>}
+      </label>
+      {children}
+    </div>
+  );
+}
+
 function UploadBox({
   value,
   onChange,
@@ -74,7 +85,6 @@ function UploadBox({
     <div className="space-y-3">
       <label className="block text-xs font-semibold uppercase tracking-widest text-stone-500">Product Photo</label>
 
-      {/* Drop zone */}
       <div
         onDragOver={e => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
@@ -114,7 +124,6 @@ function UploadBox({
 
       <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={e => handleFile(e.target.files?.[0])} />
 
-      {/* Action row */}
       <div className="flex items-center gap-3">
         <button
           type="button"
@@ -134,6 +143,8 @@ function UploadBox({
     </div>
   );
 }
+
+const inputCls = "w-full border border-stone-200 bg-white px-4 py-3 text-sm focus:outline-none focus:border-stone-500 transition-colors placeholder:text-stone-300";
 
 export default function AdminPage() {
   const [tab, setTab] = useState<Tab>('products');
@@ -171,7 +182,6 @@ export default function AdminPage() {
     setTimeout(() => setMsg(null), 3000);
   };
 
-  // ── Product handlers ──
   const handleProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -227,7 +237,6 @@ export default function AdminPage() {
     setProducts(prev => prev.map(x => x.id === p.id ? { ...x, status: newStatus } : x));
   };
 
-  // ── Category handlers ──
   const handleCategorySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -270,17 +279,6 @@ export default function AdminPage() {
     !search || p.title.toLowerCase().includes(search.toLowerCase()) || (p.category || '').toLowerCase().includes(search.toLowerCase())
   );
 
-  const Field = ({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) => (
-    <div>
-      <label className="block text-xs font-semibold uppercase tracking-widest text-stone-500 mb-2">
-        {label}{hint && <span className="ml-2 normal-case font-normal text-stone-400">{hint}</span>}
-      </label>
-      {children}
-    </div>
-  );
-
-  const inputCls = "w-full border border-stone-200 bg-white px-4 py-3 text-sm focus:outline-none focus:border-stone-500 transition-colors placeholder:text-stone-300";
-
   return (
     <div className="min-h-screen bg-stone-50">
       {/* Top bar */}
@@ -319,7 +317,6 @@ export default function AdminPage() {
         {/* ── PRODUCTS LIST ── */}
         {tab === 'products' && (
           <div>
-            {/* Header row */}
             <div className="flex items-center justify-between gap-4 mb-6">
               <div>
                 <h1 className="text-xl font-semibold text-stone-900">Products</h1>
@@ -332,7 +329,6 @@ export default function AdminPage() {
               </button>
             </div>
 
-            {/* Search */}
             <div className="relative mb-6">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300">
                 <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -360,7 +356,6 @@ export default function AdminPage() {
               <div className="bg-white border border-stone-200 divide-y divide-stone-100">
                 {filteredProducts.map(p => (
                   <div key={p.id} className="flex items-center gap-4 px-5 py-4 hover:bg-stone-50 transition-colors">
-                    {/* Thumbnail */}
                     <div className="w-14 h-14 flex-shrink-0 bg-stone-100 border border-stone-100 overflow-hidden">
                       {p.image_url ? (
                         <Image src={p.image_url} alt={p.title} width={56} height={56} className="w-full h-full object-cover" unoptimized />
@@ -373,7 +368,6 @@ export default function AdminPage() {
                       )}
                     </div>
 
-                    {/* Info */}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-stone-900 truncate">{p.title}</p>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -385,7 +379,6 @@ export default function AdminPage() {
                       </div>
                     </div>
 
-                    {/* Actions */}
                     <div className="flex items-center gap-3 flex-shrink-0">
                       <button onClick={() => handleToggleStatus(p)}
                         className={`text-[11px] font-semibold uppercase tracking-wider px-3 py-1.5 border transition-colors ${
@@ -427,7 +420,6 @@ export default function AdminPage() {
             </div>
 
             <form onSubmit={handleProductSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Left column */}
               <div className="space-y-6">
                 <Field label="Product Name">
                   <input type="text" required value={productForm.title}
@@ -443,7 +435,6 @@ export default function AdminPage() {
                     className={`${inputCls} font-mono text-xs`} />
                 </Field>
 
-                {/* Price row */}
                 <div className="grid grid-cols-2 gap-4">
                   <Field label="Selling Price (€)">
                     <input
@@ -498,7 +489,6 @@ export default function AdminPage() {
                 </Field>
               </div>
 
-              {/* Right column — photo */}
               <div className="space-y-6">
                 <UploadBox
                   value={productForm.image_url}
@@ -511,7 +501,6 @@ export default function AdminPage() {
                   </div>
                 )}
 
-                {/* Profit indicator */}
                 {productForm.price && productForm.cost_price && (
                   <div className="border border-stone-200 bg-white p-4">
                     <p className="text-xs font-semibold uppercase tracking-widest text-stone-400 mb-2">Margin</p>
@@ -531,7 +520,6 @@ export default function AdminPage() {
                 )}
               </div>
 
-              {/* Submit — full width */}
               <div className="md:col-span-2 flex items-center gap-4 pt-2 border-t border-stone-200">
                 <button type="submit" disabled={saving}
                   className="bg-stone-900 text-white text-sm font-semibold px-8 py-3.5 hover:bg-stone-700 transition-colors disabled:opacity-50">
