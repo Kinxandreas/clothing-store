@@ -9,18 +9,18 @@ import { useRouter } from 'next/navigation';
 function KinxLogo() {
   return (
     <svg
-      width="54"
-      height="20"
-      viewBox="0 0 54 20"
+      width="42"
+      height="16"
+      viewBox="0 0 42 16"
       fill="none"
       aria-label="KINX"
       xmlns="http://www.w3.org/2000/svg"
     >
       <text
         x="0"
-        y="17"
+        y="13"
         fontFamily="'Georgia', 'Times New Roman', serif"
-        fontSize="18"
+        fontSize="14"
         fontWeight="700"
         letterSpacing="2"
         fill="currentColor"
