@@ -135,9 +135,8 @@ export default async function HomePage() {
             ))}
           </div>
         ) : (
-          <div className="border border-dashed border-stone-300 py-28 text-center">
-            <p className="eyebrow text-stone-400 mb-3">No products yet</p>
-            <Link href="/admin" className="eyebrow text-accent link-underline">Add from Admin →</Link>
+          <div className="py-20 text-center">
+            <p className="eyebrow text-stone-400">Coming soon</p>
           </div>
         )}
       </section>
