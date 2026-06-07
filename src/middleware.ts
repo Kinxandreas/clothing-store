@@ -4,7 +4,6 @@ import { createServerClient } from '@supabase/ssr';
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
-  // Only create Supabase client if env vars exist
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -25,14 +24,27 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  // Protect /admin — must be logged in
   const { data: { user } } = await supabase.auth.getUser();
   const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
 
-  if (isAdminRoute && !user) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirect', request.nextUrl.pathname);
-    return NextResponse.redirect(loginUrl);
+  if (isAdminRoute) {
+    // Not logged in → redirect to login
+    if (!user) {
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('redirect', request.nextUrl.pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // Logged in but not admin → redirect to home
+    const { data: adminRow } = await supabase
+      .from('admins')
+      .select('id')
+      .eq('id', user.id)
+      .single();
+
+    if (!adminRow) {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
   }
 
   return supabaseResponse;
