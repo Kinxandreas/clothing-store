@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120" fill="none">
+  <!-- Crown -->
+  <g fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Crown base -->
+    <rect x="62" y="28" width="76" height="7" rx="2" fill="currentColor"/>
+    <!-- Crown points -->
+    <!-- Left point -->
+    <polyline points="62,35 55,14 78,28" fill="currentColor"/>
+    <!-- Middle point -->
+    <polyline points="100,35 100,8 100,35" fill="none"/>
+    <polygon points="85,28 100,6 115,28" fill="currentColor"/>
+    <!-- Right point -->
+    <polyline points="138,35 145,14 122,28" fill="currentColor"/>
+    <!-- Arrow tip on middle -->
+    <polygon points="96,8 100,1 104,8" fill="currentColor"/>
+  </g>
+  <!-- KINX text - bold italic brush style -->
+  <text
+    x="14"
+    y="105"
+    font-family="Impact, 'Arial Black', sans-serif"
+    font-size="72"
+    font-weight="900"
+    font-style="italic"
+    letter-spacing="-2"
+    fill="currentColor"
+  >KiNX</text>
+</svg>
