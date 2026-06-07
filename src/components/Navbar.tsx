@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useCartStore } from '@/store/cart';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
@@ -57,10 +58,22 @@ export default function Navbar() {
       <nav className={`sticky top-0 z-50 transition-all duration-500 ${
         scrolled ? 'bg-paper/95 backdrop-blur-md shadow-[0_1px_0_0_rgba(15,14,12,0.08)]' : 'bg-paper'
       }`}>
-        <div className="max-w-[1400px] mx-auto px-6 md:px-10 h-[60px] grid grid-cols-3 items-center">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-10 h-[60px] flex items-center">
 
-          {/* Left nav links */}
-          <div className="hidden md:flex items-center gap-9">
+          {/* Logo — left */}
+          <Link href="/" className="flex-shrink-0 flex items-center">
+            <Image
+              src="/kinx-logo.jpg"
+              alt="KINX"
+              width={52}
+              height={52}
+              className="object-contain"
+              priority
+            />
+          </Link>
+
+          {/* Nav links — centered absolutely so they stay truly centered */}
+          <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-9">
             {navLinks.map(([label, href]) => (
               <Link key={href} href={href}
                 className="eyebrow text-stone-500 hover:text-ink transition-colors duration-200 link-underline">
@@ -71,7 +84,7 @@ export default function Navbar() {
 
           {/* Mobile hamburger */}
           <button
-            className="md:hidden w-9 h-9 flex flex-col justify-center gap-[5px]"
+            className="md:hidden w-9 h-9 flex flex-col justify-center gap-[5px] ml-auto"
             onClick={() => setMenuOpen(v => !v)}
             aria-label="Menu"
           >
@@ -86,13 +99,8 @@ export default function Navbar() {
             }`} />
           </button>
 
-          {/* Logo */}
-          <Link href="/" className="flex justify-center col-start-2">
-            <span className="display tracking-[0.28em] text-[1.4rem] text-ink select-none">KINX</span>
-          </Link>
-
-          {/* Right icons */}
-          <div className="flex items-center justify-end gap-5">
+          {/* Right icons — pushed to far right */}
+          <div className="hidden md:flex items-center gap-5 ml-auto">
 
             {/* Account */}
             <div className="relative">
@@ -159,6 +167,21 @@ export default function Navbar() {
               )}
             </Link>
           </div>
+
+          {/* Cart icon on mobile (always visible) */}
+          <Link href="/cart" aria-label="Cart"
+            className="md:hidden relative text-stone-500 hover:text-ink transition-colors duration-200 ml-4">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
+              <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <path d="M16 10a4 4 0 01-8 0" />
+            </svg>
+            {totalItems() > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 bg-ink text-paper text-[9px] font-medium min-w-[16px] h-4 rounded-full flex items-center justify-center px-0.5 tabular-nums">
+                {totalItems()}
+              </span>
+            )}
+          </Link>
         </div>
       </nav>
 
