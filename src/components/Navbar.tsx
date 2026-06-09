@@ -16,7 +16,7 @@ export default function Navbar() {
   const router = useRouter();
 
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 40);
+    const handler = () => setScrolled(window.scrollY > 60);
     window.addEventListener('scroll', handler, { passive: true });
     return () => window.removeEventListener('scroll', handler);
   }, []);
@@ -53,14 +53,19 @@ export default function Navbar() {
     ['Keychains', '/shop?category=keychains'],
   ];
 
+  // When transparent: links & icons are white. When scrolled: revert to dark on light bg.
+  const transparent = !scrolled && !menuOpen;
+
   return (
     <>
-      <nav className={`sticky top-0 z-50 transition-all duration-500 ${
-        scrolled ? 'bg-paper/95 backdrop-blur-md shadow-[0_1px_0_0_rgba(15,14,12,0.08)]' : 'bg-paper'
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        transparent
+          ? 'bg-transparent'
+          : 'bg-paper/95 backdrop-blur-md shadow-[0_1px_0_0_rgba(15,14,12,0.08)]'
       }`}>
-        <div className="max-w-[1400px] mx-auto px-6 md:px-10 h-[60px] flex items-center">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-10 h-[64px] flex items-center">
 
-          {/* Logo — left */}
+          {/* Logo */}
           <Link href="/" className="flex-shrink-0 flex items-center">
             <Image
               src="/kinx-logo.jpg"
@@ -72,11 +77,15 @@ export default function Navbar() {
             />
           </Link>
 
-          {/* Nav links — centered absolutely so they stay truly centered */}
+          {/* Nav links — centered */}
           <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-9">
             {navLinks.map(([label, href]) => (
               <Link key={href} href={href}
-                className="eyebrow text-stone-500 hover:text-ink transition-colors duration-200 link-underline">
+                className={`eyebrow transition-colors duration-200 link-underline ${
+                  transparent
+                    ? 'text-white/80 hover:text-white'
+                    : 'text-stone-500 hover:text-ink'
+                }`}>
                 {label}
               </Link>
             ))}
@@ -88,19 +97,21 @@ export default function Navbar() {
             onClick={() => setMenuOpen(v => !v)}
             aria-label="Menu"
           >
-            <span className={`block h-px bg-ink transition-all duration-300 origin-center ${
-              menuOpen ? 'rotate-45 translate-y-[7px] w-6' : 'w-6'
+            <span className={`block h-px transition-all duration-300 origin-center ${
+              menuOpen ? 'rotate-45 translate-y-[7px] w-6 bg-ink' : `w-6 ${transparent ? 'bg-white' : 'bg-ink'}`
             }`} />
-            <span className={`block h-px bg-ink transition-all duration-300 ${
-              menuOpen ? 'opacity-0 w-4' : 'w-4'
+            <span className={`block h-px transition-all duration-300 ${
+              menuOpen ? 'opacity-0 w-4 bg-ink' : `w-4 ${transparent ? 'bg-white' : 'bg-ink'}`
             }`} />
-            <span className={`block h-px bg-ink transition-all duration-300 origin-center ${
-              menuOpen ? '-rotate-45 -translate-y-[7px] w-6' : 'w-5'
+            <span className={`block h-px transition-all duration-300 origin-center ${
+              menuOpen ? '-rotate-45 -translate-y-[7px] w-6 bg-ink' : `w-5 ${transparent ? 'bg-white' : 'bg-ink'}`
             }`} />
           </button>
 
-          {/* Right icons — pushed to far right */}
-          <div className="hidden md:flex items-center gap-5 ml-auto">
+          {/* Right icons */}
+          <div className={`hidden md:flex items-center gap-5 ml-auto transition-colors duration-300 ${
+            transparent ? 'text-white/80' : 'text-stone-500'
+          }`}>
 
             {/* Account */}
             <div className="relative">
@@ -109,7 +120,9 @@ export default function Navbar() {
                   <button
                     onClick={e => { e.stopPropagation(); setAccountOpen(v => !v); }}
                     aria-label="Account menu"
-                    className="text-stone-500 hover:text-ink transition-colors duration-200"
+                    className={`transition-colors duration-200 ${
+                      transparent ? 'text-white/80 hover:text-white' : 'text-stone-500 hover:text-ink'
+                    }`}
                   >
                     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
                       <circle cx="12" cy="8" r="4" />
@@ -143,7 +156,9 @@ export default function Navbar() {
                 </>
               ) : (
                 <Link href="/login" aria-label="Sign in"
-                  className="text-stone-500 hover:text-ink transition-colors duration-200">
+                  className={`transition-colors duration-200 ${
+                    transparent ? 'text-white/80 hover:text-white' : 'text-stone-500 hover:text-ink'
+                  }`}>
                   <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
                     <circle cx="12" cy="8" r="4" />
                     <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
@@ -154,7 +169,9 @@ export default function Navbar() {
 
             {/* Cart */}
             <Link href="/cart" aria-label="Cart"
-              className="relative text-stone-500 hover:text-ink transition-colors duration-200">
+              className={`relative transition-colors duration-200 ${
+                transparent ? 'text-white/80 hover:text-white' : 'text-stone-500 hover:text-ink'
+              }`}>
               <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
                 <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
                 <line x1="3" y1="6" x2="21" y2="6" />
@@ -168,9 +185,11 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Cart icon on mobile (always visible) */}
+          {/* Cart icon on mobile */}
           <Link href="/cart" aria-label="Cart"
-            className="md:hidden relative text-stone-500 hover:text-ink transition-colors duration-200 ml-4">
+            className={`md:hidden relative transition-colors duration-200 ml-4 ${
+              transparent ? 'text-white/80 hover:text-white' : 'text-stone-500 hover:text-ink'
+            }`}>
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
               <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
               <line x1="3" y1="6" x2="21" y2="6" />
