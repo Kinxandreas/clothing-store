@@ -15,7 +15,8 @@ export default async function HomePage() {
   return (
     <div>
       {/* ══ HERO ══ */}
-      <section className="relative overflow-hidden bg-stone-900 -mt-[88px]" style={{ height: '96vh', minHeight: '560px' }}>
+      {/* -mt accounts for navbar (88px) + announcement bar (34px) = 122px */}
+      <section className="relative overflow-hidden bg-stone-900 -mt-[122px]" style={{ height: '96vh', minHeight: '560px' }}>
         <Image
           src="/hero.jpg"
           alt="KINX Streetwear Hero"
@@ -50,7 +51,7 @@ export default async function HomePage() {
       {/* ══ FULL BLEED QUOTE ══ */}
       <section className="bg-ink text-paper py-24 px-6 text-center">
         <p className="display text-paper/80 mx-auto" style={{ fontSize: 'clamp(1.6rem, 3vw, 2.8rem)', maxWidth: '700px', lineHeight: 1.3 }}>
-          &ldquo;The streets are your runway — <em>wear it like you mean it.</em>&rdquo;
+          &ldquo;The streets are your runway&nbsp;— <em>wear it like you mean it.</em>&rdquo;
         </p>
       </section>
 
