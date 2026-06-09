@@ -11,15 +11,16 @@ const collectionMeta: Record<string, { label: string; description: string }> = {
   'collection-5': { label: 'Collection 5', description: 'The latest drop. Fresh out the box.' },
 };
 
-export default async function CollectionPage({ params }: { params: { slug: string } }) {
-  const meta = collectionMeta[params.slug] ?? { label: params.slug, description: '' };
+export default async function CollectionPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const meta = collectionMeta[slug] ?? { label: slug, description: '' };
 
   const supabase = await createClient();
   const { data: products } = await supabase
     .from('products')
     .select('*, product_images(*)')
     .eq('status', 'active')
-    .eq('collection', params.slug);
+    .eq('collection', slug);
 
   return (
     <div className="min-h-screen bg-paper">
