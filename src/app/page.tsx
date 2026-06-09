@@ -25,48 +25,8 @@ export default async function HomePage() {
           sizes="100vw"
           quality={100}
         />
-        {/* Minimal gradient only at very bottom for a clean edge */}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/15" />
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-px h-16 bg-white/20" />
-      </section>
-
-      {/* ══ MARQUEE BAND ══ */}
-      <div className="border-y border-stone-200 overflow-hidden" style={{ height: '44px' }}>
-        <div className="marquee flex items-center h-full whitespace-nowrap">
-          {Array(8).fill(null).map((_, i) => (
-            <span key={i} className="eyebrow text-stone-400 px-10">
-              NEW DROPS WEEKLY &nbsp;—&nbsp; PREMIUM STREETWEAR &nbsp;—&nbsp; FREE SHIPPING OVER €80 &nbsp;—&nbsp; KINX — CYPRUS
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* ══ SPLIT EDITORIAL — 3 categories ══ */}
-      <section className="grid md:grid-cols-3">
-        <div className="relative img-container" style={{ aspectRatio: '3/4' }}>
-          <Image src="https://images.unsplash.com/photo-1512374382149-233c42b6a83b?w=800&q=80" alt="KINX Clothing" fill className="object-cover" sizes="33vw" />
-          <div className="absolute inset-0 bg-gradient-to-t from-ink/60 to-transparent" />
-          <div className="absolute bottom-8 left-8">
-            <span className="eyebrow text-white/60 block mb-2">Apparel</span>
-            <Link href="/shop?category=clothing" className="display text-white text-3xl hover:text-accent transition-colors">Clothing</Link>
-          </div>
-        </div>
-        <div className="relative img-container" style={{ aspectRatio: '3/4' }}>
-          <Image src="https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=800&q=80" alt="KINX Hats" fill className="object-cover" sizes="33vw" />
-          <div className="absolute inset-0 bg-gradient-to-t from-ink/60 to-transparent" />
-          <div className="absolute bottom-8 left-8">
-            <span className="eyebrow text-white/60 block mb-2">Headwear</span>
-            <Link href="/shop?category=hats" className="display text-white text-3xl hover:text-accent transition-colors">Hats</Link>
-          </div>
-        </div>
-        <div className="relative img-container" style={{ aspectRatio: '3/4' }}>
-          <Image src="https://images.unsplash.com/photo-1614854262318-831574f15f1f?w=800&q=80" alt="KINX Keychains" fill className="object-cover" sizes="33vw" />
-          <div className="absolute inset-0 bg-gradient-to-t from-ink/60 to-transparent" />
-          <div className="absolute bottom-8 left-8">
-            <span className="eyebrow text-white/60 block mb-2">Accessories</span>
-            <Link href="/shop?category=keychains" className="display text-white text-3xl hover:text-accent transition-colors">Keychains</Link>
-          </div>
-        </div>
       </section>
 
       {/* ══ NEW ARRIVALS ══ */}
