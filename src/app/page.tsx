@@ -15,7 +15,8 @@ export default async function HomePage() {
   return (
     <div>
       {/* ══ HERO ══ */}
-      <section className="relative overflow-hidden bg-stone-900" style={{ height: '96vh', minHeight: '560px' }}>
+      {/* -mt-[64px] pulls the section up so it starts behind the fixed navbar */}
+      <section className="relative overflow-hidden bg-stone-900 -mt-[64px]" style={{ height: '96vh', minHeight: '560px' }}>
         <Image
           src="https://images.unsplash.com/photo-1523398002811-999ca8dec234?w=1800&q=85"
           alt="KINX Streetwear Hero"
