@@ -63,10 +63,10 @@ export default function Navbar() {
           {/* Logo — left */}
           <Link href="/" className="flex-shrink-0 flex items-center">
             <Image
-              src="/kinx-logo.svg"
+              src="/kinx-logo.jpg"
               alt="KINX"
-              width={60}
-              height={36}
+              width={80}
+              height={48}
               className="object-contain"
               priority
             />
