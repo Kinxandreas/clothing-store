@@ -18,7 +18,7 @@ export default async function HomePage() {
       {/* -mt-[64px] pulls the section up so it starts behind the fixed navbar */}
       <section className="relative overflow-hidden bg-stone-900 -mt-[64px]" style={{ height: '96vh', minHeight: '560px' }}>
         <Image
-          src="https://images.unsplash.com/photo-1523398002811-999ca8dec234?w=1800&q=85"
+          src="/hero.jpg"
           alt="KINX Streetwear Hero"
           fill
           priority
