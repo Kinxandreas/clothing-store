@@ -15,8 +15,7 @@ export default async function HomePage() {
   return (
     <div>
       {/* ══ HERO ══ */}
-      {/* -mt-[64px] pulls the section up so it starts behind the fixed navbar */}
-      <section className="relative overflow-hidden bg-stone-900 -mt-[64px]" style={{ height: '96vh', minHeight: '560px' }}>
+      <section className="relative overflow-hidden bg-stone-900 -mt-[88px]" style={{ height: '96vh', minHeight: '560px' }}>
         <Image
           src="/hero.jpg"
           alt="KINX Streetwear Hero"
@@ -25,27 +24,8 @@ export default async function HomePage() {
           className="object-cover opacity-50"
           sizes="100vw"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/60" />
-
-        <div className="absolute inset-0 flex flex-col justify-end px-8 md:px-16 pb-16 md:pb-20">
-          <span className="eyebrow text-white/50 mb-5 fade-up">New Drop — 2026</span>
-          <h1 className="display text-white leading-none mb-7 fade-up fade-up-delay-1"
-            style={{ fontSize: 'clamp(3.5rem, 7vw, 7.5rem)' }}>
-            Built for<br />
-            <em>the Streets</em>
-          </h1>
-          <div className="flex items-center gap-6 fade-up fade-up-delay-2">
-            <Link href="/shop"
-              className="eyebrow bg-white text-ink px-9 py-4 hover:bg-accent hover:text-white transition-all duration-300">
-              Shop Now
-            </Link>
-            <Link href="/shop?category=hats"
-              className="eyebrow text-white/70 hover:text-white transition-colors duration-200 link-underline">
-              Hats & Accessories →
-            </Link>
-          </div>
-        </div>
-
+        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/40" />
+        {/* Subtle scroll indicator */}
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-px h-16 bg-white/20" />
       </section>
 
