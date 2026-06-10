@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import ScrollReveal from '@/components/ScrollReveal';
 
 export const metadata: Metadata = {
   title: 'KINX — Men\'s Streetwear',
@@ -16,10 +17,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body>
-        {/* Announcement bar */}
-        <div style={{ background: '#0f0e0c', height: '34px', overflow: 'hidden' }} className="flex items-center">
+        {/* ── Announcement bar ── always above navbar */}
+        <div
+          style={{ background: '#0f0e0c', height: '34px', overflow: 'hidden' }}
+          className="flex items-center relative z-50"
+        >
           <div className="marquee flex whitespace-nowrap">
-            {Array(6).fill(null).map((_, i) => (
+            {Array(8).fill(null).map((_, i) => (
               <span key={i} className="eyebrow text-white/50 px-14">
                 FREE SHIPPING ON ORDERS OVER €80
                 &nbsp;&nbsp;·&nbsp;&nbsp;
@@ -30,9 +34,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             ))}
           </div>
         </div>
+
         <Navbar />
         <main>{children}</main>
         <Footer />
+        <ScrollReveal />
       </body>
     </html>
   );
