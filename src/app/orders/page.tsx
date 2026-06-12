@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default async function OrdersPage() {
   const supabase = await createClient();
@@ -68,25 +69,38 @@ export default async function OrdersPage() {
 
               {order.order_items && order.order_items.length > 0 && (
                 <div className="px-6 md:px-8 py-5 space-y-4">
-                  {(order.order_items as any[]).map((item) => (
-                    <div key={item.id} className="flex items-center gap-4">
-                      <div className="w-12 h-16 bg-stone-100 flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-ink">
-                          {item.products?.title ?? 'Product'}
-                        </p>
-                        {item.size && (
-                          <p className="eyebrow text-stone-400 text-xs mt-0.5">{item.size}</p>
-                        )}
+                  {(order.order_items as any[]).map((item) => {
+                    const imageUrl = item.products?.product_images?.[0]?.image_url;
+                    return (
+                      <div key={item.id} className="flex items-center gap-4">
+                        <div className="w-12 h-16 bg-stone-100 flex-shrink-0 relative overflow-hidden">
+                          {imageUrl ? (
+                            <Image
+                              src={imageUrl}
+                              alt={item.products?.title ?? 'Product'}
+                              fill
+                              className="object-cover"
+                              sizes="48px"
+                            />
+                          ) : null}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-ink">
+                            {item.products?.title ?? 'Product'}
+                          </p>
+                          {item.size && (
+                            <p className="eyebrow text-stone-400 text-xs mt-0.5">{item.size}</p>
+                          )}
+                        </div>
+                        <div className="text-right text-sm">
+                          <p className="text-stone-400">× {item.quantity}</p>
+                          {item.price != null && (
+                            <p className="tabular-nums font-medium">€{Number(item.price).toFixed(2)}</p>
+                          )}
+                        </div>
                       </div>
-                      <div className="text-right text-sm">
-                        <p className="text-stone-400">× {item.quantity}</p>
-                        {item.price != null && (
-                          <p className="tabular-nums font-medium">€{Number(item.price).toFixed(2)}</p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
