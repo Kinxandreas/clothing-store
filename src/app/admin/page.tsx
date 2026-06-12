@@ -12,6 +12,7 @@ interface Product {
   price: number;
   cost_price: number | null;
   category: string | null;
+  collection_id: string | null;
   status: string;
   image_url?: string;
 }
@@ -31,7 +32,7 @@ interface Collection {
   sort_order: number;
 }
 
-const EMPTY_PRODUCT = { title: '', slug: '', description: '', price: '', cost_price: '', category: '', status: 'active', image_url: '' };
+const EMPTY_PRODUCT = { title: '', slug: '', description: '', price: '', cost_price: '', category: '', collection_id: '', status: 'active', image_url: '' };
 const EMPTY_CATEGORY = { name: '', slug: '', sort_order: '0' };
 const EMPTY_COLLECTION = { name: '', slug: '', image_url: '', sort_order: '0' };
 
@@ -177,7 +178,14 @@ export default function AdminPage() {
   // ── PRODUCT handlers ──
   const handleProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setSaving(true);
-    const payload = { ...productForm, gender: 'men', price: parseFloat(productForm.price) || 0, cost_price: productForm.cost_price ? parseFloat(productForm.cost_price) : null, slug: productForm.slug || slugify(productForm.title) };
+    const payload = {
+      ...productForm,
+      gender: 'men',
+      price: parseFloat(productForm.price) || 0,
+      cost_price: productForm.cost_price ? parseFloat(productForm.cost_price) : null,
+      slug: productForm.slug || slugify(productForm.title),
+      collection_id: productForm.collection_id || null,
+    };
     const url = editingProduct ? `/api/admin/products/${editingProduct.id}` : '/api/admin/products';
     const method = editingProduct ? 'PATCH' : 'POST';
     const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
@@ -191,7 +199,17 @@ export default function AdminPage() {
 
   const startEditProduct = (p: Product) => {
     setEditingProduct(p);
-    setProductForm({ title: p.title, slug: p.slug, description: p.description || '', price: String(p.price), cost_price: p.cost_price != null ? String(p.cost_price) : '', category: p.category || '', status: p.status, image_url: p.image_url || '' });
+    setProductForm({
+      title: p.title,
+      slug: p.slug,
+      description: p.description || '',
+      price: String(p.price),
+      cost_price: p.cost_price != null ? String(p.cost_price) : '',
+      category: p.category || '',
+      collection_id: p.collection_id || '',
+      status: p.status,
+      image_url: p.image_url || '',
+    });
     setMsg(null); setTab('add-product'); window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -347,6 +365,10 @@ export default function AdminPage() {
                         <span className="text-sm font-semibold text-stone-700">€{Number(p.price).toFixed(2)}</span>
                         {p.cost_price != null && <Pill label={`Cost €${Number(p.cost_price).toFixed(2)}`} color="amber" />}
                         {p.category && <Pill label={p.category} color="stone" />}
+                        {p.collection_id && (() => {
+                          const col = collections.find(c => c.id === p.collection_id);
+                          return col ? <Pill label={col.name} color="green" /> : null;
+                        })()}
                       </div>
                     </div>
                     <div className="flex items-center gap-3 flex-shrink-0">
@@ -422,6 +444,18 @@ export default function AdminPage() {
                     </select>
                   </Field>
                 </div>
+                <Field label="Collection" hint="— optional">
+                  <select
+                    value={productForm.collection_id}
+                    onChange={e => setProductForm({ ...productForm, collection_id: e.target.value })}
+                    className={inputCls}
+                  >
+                    <option value="">— None —</option>
+                    {collections.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </Field>
                 <Field label="Description" hint="— optional">
                   <textarea value={productForm.description} rows={5}
                     onChange={e => setProductForm({ ...productForm, description: e.target.value })}
