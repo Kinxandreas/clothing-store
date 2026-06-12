@@ -1,44 +1,45 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 const collections = [
-  { slug: 'collection-1', label: 'Collection 1', description: 'The first drop from KINX.' },
-  { slug: 'collection-2', label: 'Collection 2', description: 'Bold pieces from our second release.' },
-  { slug: 'collection-3', label: 'Collection 3', description: 'Street-ready fits for every occasion.' },
-  { slug: 'collection-4', label: 'Collection 4', description: 'Limited edition — built for the streets.' },
-  { slug: 'collection-5', label: 'Collection 5', description: 'The latest drop. Fresh out the box.' },
+  { slug: 'collection-1', label: 'Collection 1', image: '/hero.jpg' },
+  { slug: 'collection-2', label: 'Collection 2', image: '/hero1.jpg' },
+  { slug: 'collection-3', label: 'Collection 3', image: '/hero2.jpg' },
+  { slug: 'collection-4', label: 'Collection 4', image: '/hero.jpg' },
+  { slug: 'collection-5', label: 'Collection 5', image: '/hero1.jpg' },
 ];
 
 export default function CollectionsPage() {
   return (
     <div className="min-h-screen bg-paper">
-      <div className="max-w-[1400px] mx-auto px-6 md:px-10 pt-16 pb-6">
+      <div className="max-w-[1400px] mx-auto px-6 md:px-10 pt-16 pb-10">
         <span className="eyebrow text-stone-400 block mb-3">Browse</span>
         <h1 className="display" style={{ fontSize: 'clamp(2.5rem, 5vw, 5rem)' }}>Collections</h1>
       </div>
 
       <div className="max-w-[1400px] mx-auto px-6 md:px-10 pb-24">
-        <div className="border-t border-stone-200">
-          {collections.map((c, i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {collections.map((c) => (
             <Link
               key={c.slug}
               href={`/collections/${c.slug}`}
-              className="group flex items-center justify-between py-7 border-b border-stone-200 hover:bg-stone-50 transition-colors px-2 -mx-2"
+              className="group block"
             >
-              <div className="flex items-center gap-8">
-                <span className="eyebrow text-stone-300 text-xs w-6">{String(i + 1).padStart(2, '0')}</span>
-                <div>
-                  <h2 className="display text-ink group-hover:text-accent transition-colors duration-200" style={{ fontSize: 'clamp(1.4rem, 2.5vw, 2rem)' }}>
-                    {c.label}
-                  </h2>
-                  <p className="eyebrow text-stone-400 text-xs mt-1">{c.description}</p>
-                </div>
+              <div className="overflow-hidden">
+                <Image
+                  src={c.image}
+                  alt={c.label}
+                  width={500}
+                  height={500}
+                  className="object-cover w-full aspect-square group-hover:scale-105 transition-transform duration-500"
+                />
               </div>
-              <svg
-                width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.3"
-                className="text-stone-300 group-hover:text-ink group-hover:translate-x-1 transition-all duration-200 flex-shrink-0"
+              <p
+                className="eyebrow text-ink mt-4 tracking-widest uppercase"
+                style={{ fontSize: '0.8rem', letterSpacing: '0.14em' }}
               >
-                <path d="M3 9h12M10 4l5 5-5 5" />
-              </svg>
+                {c.label}
+              </p>
             </Link>
           ))}
         </div>
