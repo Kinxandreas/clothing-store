@@ -55,7 +55,7 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="relative z-40 bg-paper border-b border-stone-100">
+      <nav className="relative z-40 bg-transparent">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 h-[88px] flex items-center justify-between">
 
           {/* LEFT */}
