@@ -55,13 +55,13 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="absolute top-0 left-0 right-0 z-50 bg-transparent">
+      <nav className="relative z-40 bg-paper border-b border-stone-100">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 h-[88px] flex items-center justify-between">
 
           {/* LEFT */}
           <div className="hidden md:flex items-center gap-9 w-[300px]">
             <Link href="/shop"
-              className="text-white/80 hover:text-white transition-colors duration-200 tracking-widest uppercase font-medium"
+              className="text-stone-500 hover:text-ink transition-colors duration-200 tracking-widest uppercase font-medium"
               style={{ fontSize: '0.8rem', letterSpacing: '0.12em' }}>
               All Products
             </Link>
@@ -69,7 +69,7 @@ export default function Navbar() {
             <div className="relative" ref={collectionsRef}>
               <button
                 onClick={e => { e.stopPropagation(); setCollectionsOpen(v => !v); }}
-                className="text-white/80 hover:text-white transition-colors duration-200 flex items-center gap-1.5 tracking-widest uppercase font-medium"
+                className="text-stone-500 hover:text-ink transition-colors duration-200 flex items-center gap-1.5 tracking-widest uppercase font-medium"
                 style={{ fontSize: '0.8rem', letterSpacing: '0.12em' }}>
                 Collections
                 <svg
@@ -111,14 +111,14 @@ export default function Navbar() {
           </div>
 
           {/* Mobile cart + hamburger */}
-          <Link href="/cart" aria-label="Cart" className="md:hidden relative text-white/80 hover:text-white transition-colors duration-200 ml-auto mr-5">
+          <Link href="/cart" aria-label="Cart" className="md:hidden relative text-stone-500 hover:text-ink transition-colors duration-200 ml-auto mr-5">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
               <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
               <line x1="3" y1="6" x2="21" y2="6" />
               <path d="M16 10a4 4 0 01-8 0" />
             </svg>
             {totalItems() > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 bg-white text-ink text-[9px] font-medium min-w-[16px] h-4 rounded-full flex items-center justify-center px-0.5 tabular-nums">
+              <span className="absolute -top-1.5 -right-1.5 bg-ink text-paper text-[9px] font-medium min-w-[16px] h-4 rounded-full flex items-center justify-center px-0.5 tabular-nums">
                 {totalItems()}
               </span>
             )}
@@ -129,14 +129,14 @@ export default function Navbar() {
             onClick={() => setMenuOpen(v => !v)}
             aria-label="Menu"
           >
-            <span className={`block h-px transition-all duration-300 origin-center ${
-              menuOpen ? 'rotate-45 translate-y-[8px] w-7 bg-ink' : 'w-7 bg-white'
+            <span className={`block h-px bg-ink transition-all duration-300 origin-center ${
+              menuOpen ? 'rotate-45 translate-y-[8px] w-7' : 'w-7'
             }`} />
-            <span className={`block h-px transition-all duration-300 ${
-              menuOpen ? 'opacity-0 w-5 bg-ink' : 'w-5 bg-white'
+            <span className={`block h-px bg-ink transition-all duration-300 ${
+              menuOpen ? 'opacity-0 w-5' : 'w-5'
             }`} />
-            <span className={`block h-px transition-all duration-300 origin-center ${
-              menuOpen ? '-rotate-45 -translate-y-[8px] w-7 bg-ink' : 'w-6 bg-white'
+            <span className={`block h-px bg-ink transition-all duration-300 origin-center ${
+              menuOpen ? '-rotate-45 -translate-y-[8px] w-7' : 'w-6'
             }`} />
           </button>
 
@@ -148,7 +148,7 @@ export default function Navbar() {
                   <button
                     onClick={e => { e.stopPropagation(); setAccountOpen(v => !v); }}
                     aria-label="Account menu"
-                    className="text-white/80 hover:text-white transition-colors duration-200"
+                    className="text-stone-500 hover:text-ink transition-colors duration-200"
                   >
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
                       <circle cx="12" cy="8" r="4" />
@@ -170,7 +170,7 @@ export default function Navbar() {
                   )}
                 </>
               ) : (
-                <Link href="/login" aria-label="Sign in" className="text-white/80 hover:text-white transition-colors duration-200">
+                <Link href="/login" aria-label="Sign in" className="text-stone-500 hover:text-ink transition-colors duration-200">
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
                     <circle cx="12" cy="8" r="4" />
                     <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
@@ -179,14 +179,14 @@ export default function Navbar() {
               )}
             </div>
 
-            <Link href="/cart" aria-label="Cart" className="relative text-white/80 hover:text-white transition-colors duration-200">
+            <Link href="/cart" aria-label="Cart" className="relative text-stone-500 hover:text-ink transition-colors duration-200">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
                 <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
                 <line x1="3" y1="6" x2="21" y2="6" />
                 <path d="M16 10a4 4 0 01-8 0" />
               </svg>
               {totalItems() > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-white text-ink text-[9px] font-medium min-w-[16px] h-4 rounded-full flex items-center justify-center px-0.5 tabular-nums">
+                <span className="absolute -top-1.5 -right-1.5 bg-ink text-paper text-[9px] font-medium min-w-[16px] h-4 rounded-full flex items-center justify-center px-0.5 tabular-nums">
                   {totalItems()}
                 </span>
               )}
