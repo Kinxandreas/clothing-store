@@ -2,27 +2,17 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCartStore } from '@/store/cart';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 
-const collections = [
-  { label: 'Collection 1', href: '/collections/collection-1' },
-  { label: 'Collection 2', href: '/collections/collection-2' },
-  { label: 'Collection 3', href: '/collections/collection-3' },
-  { label: 'Collection 4', href: '/collections/collection-4' },
-  { label: 'Collection 5', href: '/collections/collection-5' },
-];
-
 export default function Navbar() {
   const totalItems = useCartStore(state => state.totalItems);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [collectionsOpen, setCollectionsOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [accountOpen, setAccountOpen] = useState(false);
   const router = useRouter();
-  const collectionsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -34,12 +24,7 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (collectionsRef.current && !collectionsRef.current.contains(e.target as Node)) {
-        setCollectionsOpen(false);
-      }
-      setAccountOpen(false);
-    };
+    const handler = () => setAccountOpen(false);
     document.addEventListener('click', handler);
     return () => document.removeEventListener('click', handler);
   }, []);
@@ -65,35 +50,11 @@ export default function Navbar() {
               style={{ fontSize: '0.8rem', letterSpacing: '0.12em' }}>
               All Products
             </Link>
-
-            <div className="relative" ref={collectionsRef}>
-              <button
-                onClick={e => { e.stopPropagation(); setCollectionsOpen(v => !v); }}
-                className="text-stone-500 hover:text-ink transition-colors duration-200 flex items-center gap-1.5 tracking-widest uppercase font-medium"
-                style={{ fontSize: '0.8rem', letterSpacing: '0.12em' }}>
-                Collections
-                <svg
-                  width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8"
-                  className={`transition-transform duration-200 ${collectionsOpen ? 'rotate-180' : ''}`}>
-                  <path d="M2 4l4 4 4-4" />
-                </svg>
-              </button>
-
-              {collectionsOpen && (
-                <div className="absolute left-0 top-10 w-52 bg-paper border border-stone-200 shadow-xl z-50">
-                  {collections.map(c => (
-                    <Link
-                      key={c.href}
-                      href={c.href}
-                      onClick={() => setCollectionsOpen(false)}
-                      className="block px-5 py-3.5 text-stone-600 hover:text-ink hover:bg-stone-50 transition-colors border-b border-stone-100 last:border-0"
-                      style={{ fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 500 }}>
-                      {c.label}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
+            <Link href="/collections"
+              className="text-stone-500 hover:text-ink transition-colors duration-200 tracking-widest uppercase font-medium"
+              style={{ fontSize: '0.8rem', letterSpacing: '0.12em' }}>
+              Collections
+            </Link>
           </div>
 
           {/* CENTRE — Logo */}
@@ -208,13 +169,6 @@ export default function Navbar() {
             className="display text-[2.4rem] text-ink py-4 border-b border-stone-200 hover:text-accent transition-colors">
             Collections
           </Link>
-          {collections.map(c => (
-            <Link key={c.href} href={c.href} onClick={() => setMenuOpen(false)}
-              className="text-stone-400 py-3 pl-4 border-b border-stone-100 hover:text-ink transition-colors"
-              style={{ fontSize: '0.8rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 500 }}>
-              {c.label}
-            </Link>
-          ))}
           {user ? (
             <>
               <Link href="/orders" onClick={() => setMenuOpen(false)}
