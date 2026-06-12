@@ -404,10 +404,16 @@ export default function AdminPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <Field label="Category">
-                    <input type="text" list="cats" value={productForm.category}
+                    <select
+                      value={productForm.category}
                       onChange={e => setProductForm({ ...productForm, category: e.target.value })}
-                      placeholder="e.g. Shirts" className={inputCls} />
-                    <datalist id="cats">{categories.map(c => <option key={c.id} value={c.name} />)}</datalist>
+                      className={inputCls}
+                    >
+                      <option value="">— None —</option>
+                      {categories.map(c => (
+                        <option key={c.id} value={c.name}>{c.name}</option>
+                      ))}
+                    </select>
                   </Field>
                   <Field label="Visibility">
                     <select value={productForm.status} onChange={e => setProductForm({ ...productForm, status: e.target.value })} className={inputCls}>
