@@ -6,11 +6,19 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('products')
-    .select('id, title, price, category, gender, status, created_at')
+    .select('id, title, price, category, gender, status, created_at, product_images(image_url, sort_order)')
     .order('created_at', { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+
+  // Flatten the first image into image_url for easy consumption by ProductCard
+  const products = (data ?? []).map((p: any) => {
+    const images = (p.product_images ?? []).sort((a: any, b: any) => a.sort_order - b.sort_order);
+    const { product_images, ...rest } = p;
+    return { ...rest, image_url: images[0]?.image_url ?? null };
+  });
+
+  return NextResponse.json(products);
 }
 
 export async function POST(request: NextRequest) {
