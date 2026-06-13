@@ -2,14 +2,6 @@ import { createClient } from '@/lib/supabase/server';
 import ProductCard from '@/components/ProductCard';
 import { Product } from '@/types/database';
 
-const FILTERS = [
-  ['All', ''],
-  ['Men', 'men'],
-  ['Women', 'women'],
-  ['Unisex', 'unisex'],
-  ['Kids', 'kids'],
-] as const;
-
 export default async function ShopPage({
   searchParams,
 }: {
@@ -46,26 +38,6 @@ export default async function ShopPage({
       </div>
 
       <div className="max-w-[1400px] mx-auto px-6 md:px-10 py-10">
-        {/* Filter bar */}
-        <div className="flex gap-2 mb-12 overflow-x-auto pb-1 fade-up">
-          {FILTERS.map(([label, value]) => {
-            const active = gender === value || (!gender && value === '');
-            return (
-              <a
-                key={value}
-                href={value ? `/shop?gender=${value}` : '/shop'}
-                className={`eyebrow px-5 py-2.5 flex-shrink-0 border transition-all duration-200 btn-press ${
-                  active
-                    ? 'bg-ink text-paper border-ink'
-                    : 'border-stone-300 text-stone-500 hover:border-ink hover:text-ink'
-                }`}
-              >
-                {label}
-              </a>
-            );
-          })}
-        </div>
-
         {products && products.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {products.map((p: Product, i) => (
