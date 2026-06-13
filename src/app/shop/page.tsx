@@ -10,7 +10,7 @@ export default function ShopPage() {
 
   useEffect(() => {
     setLoading(true);
-    fetch('/api/products')
+    fetch('/api/shop/products')
       .then(r => r.json())
       .then(data => {
         setProducts(Array.isArray(data) ? data : []);
@@ -23,7 +23,6 @@ export default function ShopPage() {
 
   return (
     <div className="min-h-screen">
-      {/* Page header */}
       <div className="border-b border-stone-200 px-6 md:px-10 pt-14 pb-10">
         <div className="max-w-[1400px] mx-auto">
           <span className="eyebrow text-stone-400 block mb-3 fade-up">Browse</span>
@@ -31,7 +30,7 @@ export default function ShopPage() {
             All Products
           </h1>
           <p className="eyebrow text-stone-400 mt-2 fade-up-delay-2">
-            {loading ? '...' : `${count} ${count === 1 ? 'item' : 'items'}`}
+            {loading ? '\u2026' : `${count} ${count === 1 ? 'item' : 'items'}`}
           </p>
         </div>
       </div>
