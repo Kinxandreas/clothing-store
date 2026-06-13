@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import ProductCard from '@/components/ProductCard';
 import { Product } from '@/types/database';
 
 export default function ShopPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const gridRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -18,6 +19,17 @@ export default function ShopPage() {
       })
       .catch(() => setLoading(false));
   }, []);
+
+  // Trigger reveal animation on cards after they mount
+  useEffect(() => {
+    if (loading || !gridRef.current) return;
+    const observer = new IntersectionObserver(
+      entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
+      { threshold: 0.1 }
+    );
+    gridRef.current.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    return () => observer.disconnect();
+  }, [loading, products]);
 
   const count = products.length;
 
@@ -43,7 +55,10 @@ export default function ShopPage() {
             ))}
           </div>
         ) : products.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+          <div
+            ref={gridRef}
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
+          >
             {products.map((p: Product, i: number) => (
               <div
                 key={p.id}
