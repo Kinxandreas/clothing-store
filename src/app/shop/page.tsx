@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server';
 import ProductCard from '@/components/ProductCard';
 import { Product } from '@/types/database';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ShopPage({
   searchParams,
 }: {
