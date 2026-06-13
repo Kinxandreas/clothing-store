@@ -26,15 +26,13 @@ export default function CollectionPage() {
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch categories once
   useEffect(() => {
-    fetch('/api/shop/categories')
+    fetch('/api/shop/categories?context=collections')
       .then(r => r.json())
       .then(d => setCategories(Array.isArray(d) ? d : []))
       .catch(() => {});
   }, []);
 
-  // Fetch products when slug or filter changes
   useEffect(() => {
     if (!slug) return;
     setLoading(true);
@@ -56,14 +54,12 @@ export default function CollectionPage() {
 
   return (
     <div className="min-h-screen bg-paper">
-      {/* Back */}
       <div className="max-w-[1400px] mx-auto px-6 md:px-10 pt-10">
         <Link href="/collections" className="eyebrow text-stone-400 hover:text-ink transition-colors text-xs">
           ← All Collections
         </Link>
       </div>
 
-      {/* Header */}
       <div className="border-b border-stone-200 max-w-[1400px] mx-auto px-6 md:px-10 pt-6 pb-10">
         <span className="eyebrow text-stone-400 block mb-3">Collection</span>
         <h1 className="display" style={{ fontSize: 'clamp(2.5rem, 5vw, 5rem)' }}>{label}</h1>
@@ -73,7 +69,6 @@ export default function CollectionPage() {
         </p>
       </div>
 
-      {/* Filter bar */}
       {categories.length > 0 && (
         <div className="border-b border-stone-100 sticky top-0 bg-white/95 backdrop-blur-sm z-10">
           <div className="max-w-[1400px] mx-auto px-6 md:px-10 flex items-center gap-1 overflow-x-auto py-3 no-scrollbar">
@@ -84,9 +79,7 @@ export default function CollectionPage() {
                   ? 'border-stone-800 bg-stone-800 text-white'
                   : 'border-stone-200 text-stone-400 hover:border-stone-400 hover:text-stone-700'
               }`}
-            >
-              All
-            </button>
+            >All</button>
             {categories.map(cat => (
               <button
                 key={cat.id}
@@ -96,15 +89,12 @@ export default function CollectionPage() {
                     ? 'border-stone-800 bg-stone-800 text-white'
                     : 'border-stone-200 text-stone-400 hover:border-stone-400 hover:text-stone-700'
                 }`}
-              >
-                {cat.name}
-              </button>
+              >{cat.name}</button>
             ))}
           </div>
         </div>
       )}
 
-      {/* Products */}
       <div className="max-w-[1400px] mx-auto px-6 md:px-10 py-10 pb-24">
         {loading ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
@@ -130,9 +120,7 @@ export default function CollectionPage() {
               <button
                 onClick={() => setActiveFilter(null)}
                 className="eyebrow inline-block mt-8 bg-ink text-paper px-8 py-4 hover:bg-accent transition-colors duration-300"
-              >
-                View All in Collection
-              </button>
+              >View All in Collection</button>
             ) : (
               <Link href="/shop" className="eyebrow inline-block mt-8 bg-ink text-paper px-8 py-4 hover:bg-accent transition-colors duration-300">
                 Shop All Products

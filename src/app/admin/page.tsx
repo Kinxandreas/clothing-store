@@ -22,6 +22,7 @@ interface Category {
   name: string;
   slug: string;
   sort_order: number;
+  show_in: string[];
 }
 
 interface Collection {
@@ -33,8 +34,13 @@ interface Collection {
 }
 
 const EMPTY_PRODUCT = { title: '', slug: '', description: '', price: '', cost_price: '', category: '', collection_id: '', status: 'active', image_url: '' };
-const EMPTY_CATEGORY = { name: '', slug: '', sort_order: '0' };
+const EMPTY_CATEGORY = { name: '', slug: '', sort_order: '0', show_in: ['shop', 'collections'] as string[] };
 const EMPTY_COLLECTION = { name: '', slug: '', image_url: '', sort_order: '0' };
+
+const SHOW_IN_OPTIONS = [
+  { value: 'shop', label: 'All Products page' },
+  { value: 'collections', label: 'Collections pages' },
+];
 
 function slugify(str: string) {
   return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -200,15 +206,10 @@ export default function AdminPage() {
   const startEditProduct = (p: Product) => {
     setEditingProduct(p);
     setProductForm({
-      title: p.title,
-      slug: p.slug,
-      description: p.description || '',
-      price: String(p.price),
-      cost_price: p.cost_price != null ? String(p.cost_price) : '',
-      category: p.category || '',
-      collection_id: p.collection_id || '',
-      status: p.status,
-      image_url: p.image_url || '',
+      title: p.title, slug: p.slug, description: p.description || '',
+      price: String(p.price), cost_price: p.cost_price != null ? String(p.cost_price) : '',
+      category: p.category || '', collection_id: p.collection_id || '',
+      status: p.status, image_url: p.image_url || '',
     });
     setMsg(null); setTab('add-product'); window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -229,7 +230,13 @@ export default function AdminPage() {
   // ── CATEGORY handlers ──
   const handleCategorySubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setSaving(true);
-    const payload = { ...categoryForm, gender: 'men', sort_order: parseInt(categoryForm.sort_order) || 0, slug: categoryForm.slug || slugify(categoryForm.name) };
+    const payload = {
+      ...categoryForm,
+      gender: 'men',
+      sort_order: parseInt(categoryForm.sort_order) || 0,
+      slug: categoryForm.slug || slugify(categoryForm.name),
+      show_in: categoryForm.show_in,
+    };
     const url = editingCategory ? `/api/admin/categories/${editingCategory.id}` : '/api/admin/categories';
     const method = editingCategory ? 'PATCH' : 'POST';
     const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
@@ -243,7 +250,12 @@ export default function AdminPage() {
 
   const startEditCategory = (c: Category) => {
     setEditingCategory(c);
-    setCategoryForm({ name: c.name, slug: c.slug, sort_order: String(c.sort_order) });
+    setCategoryForm({
+      name: c.name,
+      slug: c.slug,
+      sort_order: String(c.sort_order),
+      show_in: Array.isArray(c.show_in) ? c.show_in : ['shop', 'collections'],
+    });
     setMsg(null); setTab('add-category'); window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -252,6 +264,15 @@ export default function AdminPage() {
     setDeleting(id);
     await fetch(`/api/admin/categories/${id}`, { method: 'DELETE' });
     setDeleting(null); setCategories(prev => prev.filter(c => c.id !== id));
+  };
+
+  const toggleShowIn = (value: string) => {
+    setCategoryForm(prev => ({
+      ...prev,
+      show_in: prev.show_in.includes(value)
+        ? prev.show_in.filter(v => v !== value)
+        : [...prev.show_in, value],
+    }));
   };
 
   // ── COLLECTION handlers ──
@@ -426,15 +447,9 @@ export default function AdminPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <Field label="Category">
-                    <select
-                      value={productForm.category}
-                      onChange={e => setProductForm({ ...productForm, category: e.target.value })}
-                      className={inputCls}
-                    >
+                    <select value={productForm.category} onChange={e => setProductForm({ ...productForm, category: e.target.value })} className={inputCls}>
                       <option value="">— None —</option>
-                      {categories.map(c => (
-                        <option key={c.id} value={c.name}>{c.name}</option>
-                      ))}
+                      {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                     </select>
                   </Field>
                   <Field label="Visibility">
@@ -445,15 +460,9 @@ export default function AdminPage() {
                   </Field>
                 </div>
                 <Field label="Collection" hint="— optional">
-                  <select
-                    value={productForm.collection_id}
-                    onChange={e => setProductForm({ ...productForm, collection_id: e.target.value })}
-                    className={inputCls}
-                  >
+                  <select value={productForm.collection_id} onChange={e => setProductForm({ ...productForm, collection_id: e.target.value })} className={inputCls}>
                     <option value="">— None —</option>
-                    {collections.map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
+                    {collections.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </Field>
                 <Field label="Description" hint="— optional">
@@ -484,11 +493,14 @@ export default function AdminPage() {
                 })()}
               </div>
               <div className="md:col-span-2 flex items-center gap-4 pt-2 border-t border-stone-200">
-                <button type="submit" disabled={saving} className="bg-stone-900 text-white text-sm font-semibold px-8 py-3.5 hover:bg-stone-700 transition-colors disabled:opacity-50">
-                  {saving ? 'Saving...' : editingProduct ? 'Save Changes' : 'Add Product'}
+                <button type="submit" disabled={saving}
+                  className="bg-stone-900 text-white text-xs font-semibold uppercase tracking-wider px-8 py-3 hover:bg-stone-700 transition-colors disabled:opacity-50">
+                  {saving ? 'Saving…' : editingProduct ? 'Save Changes' : 'Add Product'}
                 </button>
-                <button type="button" onClick={() => { setTab('products'); setEditingProduct(null); setProductForm({ ...EMPTY_PRODUCT }); setMsg(null); }}
-                  className="text-sm text-stone-400 hover:text-stone-700 transition-colors">Cancel</button>
+                {editingProduct && (
+                  <button type="button" onClick={() => { setTab('products'); setEditingProduct(null); setProductForm({ ...EMPTY_PRODUCT }); setMsg(null); }}
+                    className="text-xs text-stone-400 hover:text-stone-700 transition-colors">Cancel</button>
+                )}
               </div>
             </form>
           </div>
@@ -500,7 +512,7 @@ export default function AdminPage() {
             <div className="flex items-center justify-between gap-4 mb-6">
               <div>
                 <h1 className="text-xl font-semibold text-stone-900">Categories</h1>
-                <p className="text-sm text-stone-400 mt-0.5">{categories.length} total</p>
+                <p className="text-sm text-stone-400 mt-0.5">{categories.length} total — used as filter tags on shop &amp; collection pages</p>
               </div>
               <button onClick={() => { setEditingCategory(null); setCategoryForm({ ...EMPTY_CATEGORY }); setTab('add-category'); }}
                 className="flex items-center gap-2 bg-stone-900 text-white text-xs font-semibold uppercase tracking-wider px-5 py-3 hover:bg-stone-700 transition-colors">
@@ -517,17 +529,33 @@ export default function AdminPage() {
               </div>
             ) : (
               <div className="bg-white border border-stone-200 divide-y divide-stone-100">
-                {categories.map(c => (
-                  <div key={c.id} className="flex items-center gap-4 px-5 py-4 hover:bg-stone-50 transition-colors">
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-stone-900">{c.name}</p>
-                      <p className="text-xs font-mono text-stone-400 mt-0.5">{c.slug}</p>
+                {categories.map(c => {
+                  const showIn = Array.isArray(c.show_in) ? c.show_in : [];
+                  return (
+                    <div key={c.id} className="flex items-center gap-4 px-5 py-4 hover:bg-stone-50 transition-colors">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-stone-900">{c.name}</p>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <span className="text-xs text-stone-400 font-mono">{c.slug}</span>
+                          <span className="text-stone-200">·</span>
+                          {showIn.length === 0 ? (
+                            <span className="text-[11px] text-stone-300 uppercase tracking-wide">Hidden everywhere</span>
+                          ) : (
+                            showIn.map(ctx => (
+                              <span key={ctx} className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium tracking-wide uppercase border bg-stone-50 text-stone-500 border-stone-200">
+                                {ctx === 'shop' ? 'All Products' : 'Collections'}
+                              </span>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <button onClick={() => startEditCategory(c)} className="text-xs font-medium text-stone-500 hover:text-stone-900 transition-colors px-2 py-1">Edit</button>
+                        <button onClick={() => handleDeleteCategory(c.id)} disabled={deleting === c.id} className="text-xs text-stone-300 hover:text-red-500 transition-colors px-2 py-1 disabled:opacity-40">{deleting === c.id ? '...' : 'Delete'}</button>
+                      </div>
                     </div>
-                    <span className="text-xs text-stone-300">Order: {c.sort_order}</span>
-                    <button onClick={() => startEditCategory(c)} className="text-xs font-medium text-stone-500 hover:text-stone-900 transition-colors px-2 py-1">Edit</button>
-                    <button onClick={() => handleDeleteCategory(c.id)} disabled={deleting === c.id} className="text-xs text-stone-300 hover:text-red-500 transition-colors px-2 py-1 disabled:opacity-40">{deleting === c.id ? '...' : 'Delete'}</button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -558,16 +586,60 @@ export default function AdminPage() {
                   onChange={e => setCategoryForm({ ...categoryForm, slug: e.target.value })}
                   placeholder="shirts" className={`${inputCls} font-mono text-xs`} />
               </Field>
-              <Field label="Sort Order" hint="— lower = shown first">
-                <input type="number" min="0" value={categoryForm.sort_order}
-                  onChange={e => setCategoryForm({ ...categoryForm, sort_order: e.target.value })} className={inputCls} />
+              <Field label="Sort Order" hint="— lower = first">
+                <input type="number" value={categoryForm.sort_order}
+                  onChange={e => setCategoryForm({ ...categoryForm, sort_order: e.target.value })}
+                  className={inputCls} />
               </Field>
+
+              {/* Show in — checkbox group */}
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-widest text-stone-500 mb-3">
+                  Show filter on
+                </label>
+                <div className="border border-stone-200 bg-white divide-y divide-stone-100">
+                  {SHOW_IN_OPTIONS.map(opt => {
+                    const checked = categoryForm.show_in.includes(opt.value);
+                    return (
+                      <label key={opt.value} className="flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-stone-50 transition-colors">
+                        <div
+                          onClick={() => toggleShowIn(opt.value)}
+                          className={`w-5 h-5 flex-shrink-0 border-2 flex items-center justify-center transition-colors cursor-pointer ${
+                            checked
+                              ? 'border-stone-800 bg-stone-800'
+                              : 'border-stone-300 bg-white'
+                          }`}
+                        >
+                          {checked && (
+                            <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                              <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-stone-900">{opt.label}</p>
+                          <p className="text-xs text-stone-400 mt-0.5">
+                            {opt.value === 'shop' ? 'Filter bar on /shop (All Products page)' : 'Filter bar on each /collections/[slug] page'}
+                          </p>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+                {categoryForm.show_in.length === 0 && (
+                  <p className="text-xs text-amber-600 mt-2">⚠ This category won\'t appear as a filter anywhere.</p>
+                )}
+              </div>
+
               <div className="flex items-center gap-4 pt-2 border-t border-stone-200">
-                <button type="submit" disabled={saving} className="bg-stone-900 text-white text-sm font-semibold px-8 py-3.5 hover:bg-stone-700 transition-colors disabled:opacity-50">
-                  {saving ? 'Saving...' : editingCategory ? 'Save Changes' : 'Add Category'}
+                <button type="submit" disabled={saving}
+                  className="bg-stone-900 text-white text-xs font-semibold uppercase tracking-wider px-8 py-3 hover:bg-stone-700 transition-colors disabled:opacity-50">
+                  {saving ? 'Saving…' : editingCategory ? 'Save Changes' : 'Add Category'}
                 </button>
-                <button type="button" onClick={() => { setTab('categories'); setEditingCategory(null); setCategoryForm({ ...EMPTY_CATEGORY }); setMsg(null); }}
-                  className="text-sm text-stone-400 hover:text-stone-700 transition-colors">Cancel</button>
+                {editingCategory && (
+                  <button type="button" onClick={() => { setTab('categories'); setEditingCategory(null); setCategoryForm({ ...EMPTY_CATEGORY }); setMsg(null); }}
+                    className="text-xs text-stone-400 hover:text-stone-700 transition-colors">Cancel</button>
+                )}
               </div>
             </form>
           </div>
@@ -588,7 +660,7 @@ export default function AdminPage() {
               </button>
             </div>
             {loadingCollections ? (
-              <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-20 bg-stone-100 animate-pulse" />)}</div>
+              <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-16 bg-stone-100 animate-pulse" />)}</div>
             ) : collections.length === 0 ? (
               <div className="py-24 text-center border-2 border-dashed border-stone-200">
                 <p className="text-sm text-stone-400 mb-4">No collections yet</p>
@@ -609,12 +681,13 @@ export default function AdminPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-stone-900">{c.name}</p>
-                      <p className="text-xs font-mono text-stone-400 mt-0.5">{c.slug}</p>
+                      <p className="text-xs text-stone-400 font-mono mt-0.5">{c.slug}</p>
                     </div>
-                    <span className="text-xs text-stone-300">Order: {c.sort_order}</span>
-                    <button onClick={() => startEditCollection(c)} className="text-xs font-medium text-stone-500 hover:text-stone-900 transition-colors px-2 py-1">Edit</button>
-                    <button onClick={() => handleDeleteCollection(c.id)} disabled={deleting === c.id} className="text-xs text-stone-300 hover:text-red-500 transition-colors px-2 py-1 disabled:opacity-40">{deleting === c.id ? '...' : 'Delete'}</button>
-                  </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <button onClick={() => startEditCollection(c)} className="text-xs font-medium text-stone-500 hover:text-stone-900 transition-colors px-2 py-1">Edit</button>
+                      <button onClick={() => handleDeleteCollection(c.id)} disabled={deleting === c.id} className="text-xs text-stone-300 hover:text-red-500 transition-colors px-2 py-1 disabled:opacity-40">{deleting === c.id ? '...' : 'Delete'}</button>
+                    </div>
+2                  </div>
                 ))}
               </div>
             )}
@@ -635,39 +708,32 @@ export default function AdminPage() {
                 Back to collections
               </button>
             </div>
-            <form onSubmit={handleCollectionSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-6">
-                <Field label="Collection Name">
-                  <input type="text" required value={collectionForm.name}
-                    onChange={e => setCollectionForm({ ...collectionForm, name: e.target.value, slug: slugify(e.target.value) })}
-                    placeholder="e.g. Summer 2025" className={inputCls} />
-                </Field>
-                <Field label="URL Slug" hint="— auto-generated">
-                  <input type="text" required value={collectionForm.slug}
-                    onChange={e => setCollectionForm({ ...collectionForm, slug: e.target.value })}
-                    placeholder="summer-2025" className={`${inputCls} font-mono text-xs`} />
-                </Field>
-                <Field label="Sort Order" hint="— lower = shown first">
-                  <input type="number" min="0" value={collectionForm.sort_order}
-                    onChange={e => setCollectionForm({ ...collectionForm, sort_order: e.target.value })} className={inputCls} />
-                </Field>
-              </div>
-              <div className="space-y-6">
-                <UploadBox
-                  label="Collection Photo (500×500)"
-                  value={collectionForm.image_url}
-                  onChange={url => setCollectionForm({ ...collectionForm, image_url: url })}
-                />
-                {collectionForm.image_url && (
-                  <div className="text-xs text-stone-400 break-all font-mono border border-stone-100 bg-stone-50 px-3 py-2">{collectionForm.image_url}</div>
-                )}
-              </div>
-              <div className="md:col-span-2 flex items-center gap-4 pt-2 border-t border-stone-200">
-                <button type="submit" disabled={saving} className="bg-stone-900 text-white text-sm font-semibold px-8 py-3.5 hover:bg-stone-700 transition-colors disabled:opacity-50">
-                  {saving ? 'Saving...' : editingCollection ? 'Save Changes' : 'Add Collection'}
+            <form onSubmit={handleCollectionSubmit} className="max-w-lg space-y-6">
+              <Field label="Collection Name">
+                <input type="text" required value={collectionForm.name}
+                  onChange={e => setCollectionForm({ ...collectionForm, name: e.target.value, slug: slugify(e.target.value) })}
+                  placeholder="e.g. Summer 2025" className={inputCls} />
+              </Field>
+              <Field label="URL Slug" hint="— auto-generated">
+                <input type="text" required value={collectionForm.slug}
+                  onChange={e => setCollectionForm({ ...collectionForm, slug: e.target.value })}
+                  placeholder="summer-2025" className={`${inputCls} font-mono text-xs`} />
+              </Field>
+              <Field label="Sort Order" hint="— lower = first">
+                <input type="number" value={collectionForm.sort_order}
+                  onChange={e => setCollectionForm({ ...collectionForm, sort_order: e.target.value })}
+                  className={inputCls} />
+              </Field>
+              <UploadBox value={collectionForm.image_url} onChange={url => setCollectionForm({ ...collectionForm, image_url: url })} label="Cover Photo" />
+              <div className="flex items-center gap-4 pt-2 border-t border-stone-200">
+                <button type="submit" disabled={saving}
+                  className="bg-stone-900 text-white text-xs font-semibold uppercase tracking-wider px-8 py-3 hover:bg-stone-700 transition-colors disabled:opacity-50">
+                  {saving ? 'Saving…' : editingCollection ? 'Save Changes' : 'Add Collection'}
                 </button>
-                <button type="button" onClick={() => { setTab('collections'); setEditingCollection(null); setCollectionForm({ ...EMPTY_COLLECTION }); setMsg(null); }}
-                  className="text-sm text-stone-400 hover:text-stone-700 transition-colors">Cancel</button>
+                {editingCollection && (
+                  <button type="button" onClick={() => { setTab('collections'); setEditingCollection(null); setCollectionForm({ ...EMPTY_COLLECTION }); setMsg(null); }}
+                    className="text-xs text-stone-400 hover:text-stone-700 transition-colors">Cancel</button>
+                )}
               </div>
             </form>
           </div>

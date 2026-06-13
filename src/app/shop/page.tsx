@@ -17,15 +17,13 @@ export default function ShopPage() {
   const [loading, setLoading] = useState(true);
   const gridRef = useRef<HTMLDivElement>(null);
 
-  // Fetch categories once
   useEffect(() => {
-    fetch('/api/shop/categories')
+    fetch('/api/shop/categories?context=shop')
       .then(r => r.json())
       .then(data => setCategories(Array.isArray(data) ? data : []))
       .catch(() => {});
   }, []);
 
-  // Fetch products whenever filter changes
   useEffect(() => {
     setLoading(true);
     const url = activeFilter
@@ -40,7 +38,6 @@ export default function ShopPage() {
       .catch(() => setLoading(false));
   }, [activeFilter]);
 
-  // Trigger reveal animation whenever products update
   useEffect(() => {
     if (loading || !gridRef.current) return;
     const els = gridRef.current.querySelectorAll('.reveal');
@@ -59,13 +56,10 @@ export default function ShopPage() {
 
   return (
     <div className="min-h-screen">
-      {/* Header */}
       <div className="border-b border-stone-200 px-6 md:px-10 pt-14 pb-10">
         <div className="max-w-[1400px] mx-auto">
           <span className="eyebrow text-stone-400 block mb-3 fade-up">Browse</span>
-          <h1 className="display fade-up-delay-1" style={{ fontSize: 'clamp(2rem, 4vw, 3rem)' }}>
-            All Products
-          </h1>
+          <h1 className="display fade-up-delay-1" style={{ fontSize: 'clamp(2rem, 4vw, 3rem)' }}>All Products</h1>
           <p className="eyebrow text-stone-400 mt-2 fade-up-delay-2">
             {loading ? '\u2026' : `${count} ${count === 1 ? 'item' : 'items'}`}
             {activeFilter && <span className="ml-2 text-stone-300">in {activeFilter}</span>}
@@ -73,7 +67,6 @@ export default function ShopPage() {
         </div>
       </div>
 
-      {/* Filter bar */}
       {categories.length > 0 && (
         <div className="border-b border-stone-100 px-6 md:px-10 sticky top-0 bg-white/95 backdrop-blur-sm z-10">
           <div className="max-w-[1400px] mx-auto flex items-center gap-1 overflow-x-auto py-3 no-scrollbar">
@@ -81,12 +74,10 @@ export default function ShopPage() {
               onClick={() => setActiveFilter(null)}
               className={`flex-shrink-0 eyebrow px-4 py-2 transition-colors border ${
                 activeFilter === null
-                  ? 'border-stone-800 text-stone-800 bg-stone-800 text-white'
+                  ? 'border-stone-800 bg-stone-800 text-white'
                   : 'border-stone-200 text-stone-400 hover:border-stone-400 hover:text-stone-700'
               }`}
-            >
-              All
-            </button>
+            >All</button>
             {categories.map(cat => (
               <button
                 key={cat.id}
@@ -96,15 +87,12 @@ export default function ShopPage() {
                     ? 'border-stone-800 bg-stone-800 text-white'
                     : 'border-stone-200 text-stone-400 hover:border-stone-400 hover:text-stone-700'
                 }`}
-              >
-                {cat.name}
-              </button>
+              >{cat.name}</button>
             ))}
           </div>
         </div>
       )}
 
-      {/* Grid */}
       <div className="max-w-[1400px] mx-auto px-6 md:px-10 py-10">
         {loading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
@@ -113,16 +101,9 @@ export default function ShopPage() {
             ))}
           </div>
         ) : products.length > 0 ? (
-          <div
-            ref={gridRef}
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
-          >
+          <div ref={gridRef} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {products.map((p: Product, i: number) => (
-              <div
-                key={p.id}
-                className="reveal"
-                style={{ transitionDelay: `${Math.min(i * 0.06, 0.4)}s` }}
-              >
+              <div key={p.id} className="reveal" style={{ transitionDelay: `${Math.min(i * 0.06, 0.4)}s` }}>
                 <ProductCard product={p} />
               </div>
             ))}
@@ -135,10 +116,7 @@ export default function ShopPage() {
             </p>
             <p className="eyebrow text-stone-400 mt-3">Check back soon for new drops</p>
             {activeFilter && (
-              <button
-                onClick={() => setActiveFilter(null)}
-                className="mt-6 eyebrow text-stone-900 underline underline-offset-4"
-              >
+              <button onClick={() => setActiveFilter(null)} className="mt-6 eyebrow text-stone-900 underline underline-offset-4">
                 View all products
               </button>
             )}
