@@ -34,6 +34,13 @@ interface Collection {
   parent_id: string | null;
 }
 
+interface Variant {
+  id?: string;
+  label: string;
+  value: string;
+  sort_order: number;
+}
+
 const EMPTY_PRODUCT = { title: '', slug: '', description: '', price: '', cost_price: '', category: '', collection_id: '', status: 'active', image_url: '' };
 const EMPTY_CATEGORY = { name: '', slug: '', sort_order: '0', show_in: ['shop', 'collections'] as string[] };
 const EMPTY_COLLECTION = { name: '', slug: '', image_url: '', sort_order: '0', parent_id: '' };
@@ -42,6 +49,9 @@ const SHOW_IN_OPTIONS = [
   { value: 'shop', label: 'All Products page' },
   { value: 'collections', label: 'Collections pages' },
 ];
+
+// Common variant label presets
+const LABEL_PRESETS = ['Color', 'Size', 'Type', 'Material', 'Style'];
 
 function slugify(str: string) {
   return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -134,6 +144,122 @@ function UploadBox({ value, onChange, label = 'Photo' }: { value: string; onChan
   );
 }
 
+// ── Variants editor component ──
+function VariantsEditor({ variants, onChange }: { variants: Variant[]; onChange: (v: Variant[]) => void }) {
+  const [newLabel, setNewLabel] = useState('Color');
+  const [newValue, setNewValue] = useState('');
+  const [customLabel, setCustomLabel] = useState(false);
+
+  const add = () => {
+    const v = newValue.trim();
+    if (!v) return;
+    onChange([...variants, { label: newLabel, value: v, sort_order: variants.length }]);
+    setNewValue('');
+  };
+
+  const remove = (i: number) => onChange(variants.filter((_, idx) => idx !== i));
+
+  // Group variants by label for display
+  const groups = variants.reduce<Record<string, Variant[]>>((acc, v) => {
+    if (!acc[v.label]) acc[v.label] = [];
+    acc[v.label].push(v);
+    return acc;
+  }, {});
+
+  return (
+    <div className="space-y-4">
+      {/* Existing variants grouped by label */}
+      {Object.entries(groups).map(([label, items]) => (
+        <div key={label} className="border border-stone-200 bg-white">
+          <div className="px-4 py-2 bg-stone-50 border-b border-stone-200">
+            <span className="text-xs font-semibold uppercase tracking-widest text-stone-500">{label}</span>
+          </div>
+          <div className="flex flex-wrap gap-2 p-3">
+            {items.map((v) => {
+              const idx = variants.indexOf(v);
+              return (
+                <div key={idx} className="flex items-center gap-1.5 border border-stone-200 bg-stone-50 px-3 py-1.5">
+                  <span className="text-sm text-stone-700">{v.value}</span>
+                  <button
+                    type="button"
+                    onClick={() => remove(idx)}
+                    className="text-stone-300 hover:text-red-500 transition-colors ml-1"
+                    aria-label={`Remove ${v.value}`}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+
+      {variants.length === 0 && (
+        <p className="text-xs text-stone-400 italic">No variants yet — add one below.</p>
+      )}
+
+      {/* Add new variant row */}
+      <div className="border border-dashed border-stone-200 p-4 space-y-3">
+        <p className="text-xs font-semibold uppercase tracking-widest text-stone-400">Add variant</p>
+        <div className="flex gap-2">
+          {/* Label selector */}
+          {!customLabel ? (
+            <div className="flex gap-1 flex-wrap">
+              {LABEL_PRESETS.map(l => (
+                <button
+                  key={l}
+                  type="button"
+                  onClick={() => setNewLabel(l)}
+                  className={`text-xs px-3 py-1.5 border transition-colors ${
+                    newLabel === l
+                      ? 'bg-stone-900 text-white border-stone-900'
+                      : 'bg-white text-stone-500 border-stone-200 hover:border-stone-400'
+                  }`}
+                >{l}</button>
+              ))}
+              <button
+                type="button"
+                onClick={() => { setCustomLabel(true); setNewLabel(''); }}
+                className="text-xs px-3 py-1.5 border border-dashed border-stone-300 text-stone-400 hover:text-stone-600 transition-colors"
+              >Custom…</button>
+            </div>
+          ) : (
+            <div className="flex gap-2 items-center">
+              <input
+                autoFocus
+                value={newLabel}
+                onChange={e => setNewLabel(e.target.value)}
+                placeholder="Label (e.g. Fit)"
+                className="border border-stone-300 px-3 py-1.5 text-sm focus:outline-none focus:border-stone-500 w-36"
+              />
+              <button type="button" onClick={() => { setCustomLabel(false); setNewLabel('Color'); }} className="text-xs text-stone-400 hover:text-stone-600">← Presets</button>
+            </div>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <input
+            value={newValue}
+            onChange={e => setNewValue(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); add(); } }}
+            placeholder={`e.g. ${newLabel === 'Color' ? 'Red, Blue, White' : newLabel === 'Size' ? 'S, M, L, XL' : 'value'}`}
+            className="flex-1 border border-stone-200 px-3 py-2 text-sm focus:outline-none focus:border-stone-500 transition-colors"
+          />
+          <button
+            type="button"
+            onClick={add}
+            disabled={!newValue.trim() || !newLabel.trim()}
+            className="px-4 py-2 bg-stone-900 text-white text-xs font-medium hover:bg-stone-700 transition-colors disabled:opacity-40"
+          >Add</button>
+        </div>
+        <p className="text-[11px] text-stone-400">Press Enter or click Add. Each value is one option (e.g. type &quot;Red&quot; then Add, then &quot;Blue&quot; then Add).</p>
+      </div>
+    </div>
+  );
+}
+
 const inputCls = "w-full border border-stone-200 bg-white px-4 py-3 text-sm focus:outline-none focus:border-stone-500 transition-colors placeholder:text-stone-300";
 
 // Recursive tree builder for collections list
@@ -217,6 +343,7 @@ export default function AdminPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [editingCollection, setEditingCollection] = useState<Collection | null>(null);
+  const [variants, setVariants] = useState<Variant[]>([]);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -265,14 +392,25 @@ export default function AdminPage() {
     const method = editingProduct ? 'PATCH' : 'POST';
     const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     const data = await res.json();
+    if (!res.ok) { setSaving(false); flash('Error: ' + (data.error || 'Something went wrong'), false); return; }
+
+    // Save variants via PUT (full replace)
+    const productId = editingProduct ? editingProduct.id : data.id;
+    if (productId) {
+      await fetch(`/api/admin/products/${productId}/variants`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ variants }),
+      });
+    }
+
     setSaving(false);
-    if (!res.ok) { flash('Error: ' + (data.error || 'Something went wrong'), false); return; }
     flash(editingProduct ? '✓ Product updated' : '✓ Product added');
-    setProductForm({ ...EMPTY_PRODUCT }); setEditingProduct(null); fetchProducts();
+    setProductForm({ ...EMPTY_PRODUCT }); setEditingProduct(null); setVariants([]); fetchProducts();
     setTimeout(() => setTab('products'), 600);
   };
 
-  const startEditProduct = (p: Product) => {
+  const startEditProduct = async (p: Product) => {
     setEditingProduct(p);
     setProductForm({
       title: p.title, slug: p.slug, description: p.description || '',
@@ -280,6 +418,10 @@ export default function AdminPage() {
       category: p.category || '', collection_id: p.collection_id || '',
       status: p.status, image_url: p.image_url || '',
     });
+    // Load existing variants
+    const vRes = await fetch(`/api/admin/products/${p.id}/variants`);
+    if (vRes.ok) setVariants(await vRes.json());
+    else setVariants([]);
     setMsg(null); setTab('add-product'); window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -383,7 +525,6 @@ export default function AdminPage() {
     !search || p.title.toLowerCase().includes(search.toLowerCase()) || (p.category || '').toLowerCase().includes(search.toLowerCase())
   );
 
-  // Build flat label for parent dropdown (with depth prefix)
   function buildParentOptions(all: Collection[], excludeId?: string): { id: string; label: string }[] {
     function walk(nodes: (Collection & { children: Collection[] })[], depth: number): { id: string; label: string }[] {
       return nodes.flatMap(n => [
@@ -437,7 +578,7 @@ export default function AdminPage() {
                 <h1 className="text-xl font-semibold text-stone-900">Products</h1>
                 <p className="text-sm text-stone-400 mt-0.5">{products.length} total</p>
               </div>
-              <button onClick={() => { setEditingProduct(null); setProductForm({ ...EMPTY_PRODUCT }); setTab('add-product'); }}
+              <button onClick={() => { setEditingProduct(null); setProductForm({ ...EMPTY_PRODUCT }); setVariants([]); setTab('add-product'); }}
                 className="flex items-center gap-2 bg-stone-900 text-white text-xs font-semibold uppercase tracking-wider px-5 py-3 hover:bg-stone-700 transition-colors">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Add Product
@@ -505,92 +646,104 @@ export default function AdminPage() {
                 <h1 className="text-xl font-semibold text-stone-900">{editingProduct ? 'Edit Product' : 'New Product'}</h1>
                 {editingProduct && <p className="text-sm text-stone-400 mt-0.5">Editing: {editingProduct.title}</p>}
               </div>
-              <button onClick={() => { setTab('products'); setEditingProduct(null); setProductForm({ ...EMPTY_PRODUCT }); setMsg(null); }}
+              <button onClick={() => { setTab('products'); setEditingProduct(null); setProductForm({ ...EMPTY_PRODUCT }); setVariants([]); setMsg(null); }}
                 className="text-xs text-stone-400 hover:text-stone-700 transition-colors flex items-center gap-1">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
                 Back to products
               </button>
             </div>
-            <form onSubmit={handleProductSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-6">
-                <Field label="Product Name">
-                  <input type="text" required value={productForm.title}
-                    onChange={e => setProductForm({ ...productForm, title: e.target.value, slug: slugify(e.target.value) })}
-                    placeholder="e.g. Classic Oxford Shirt" className={inputCls} />
-                </Field>
-                <Field label="URL Slug" hint="— auto-generated">
-                  <input type="text" required value={productForm.slug}
-                    onChange={e => setProductForm({ ...productForm, slug: e.target.value })}
-                    placeholder="classic-oxford-shirt" className={`${inputCls} font-mono text-xs`} />
-                </Field>
-                <div className="grid grid-cols-2 gap-4">
-                  <Field label="Selling Price (€)">
-                    <input type="text" inputMode="decimal" required value={productForm.price}
-                      onChange={e => { const v = e.target.value; if (/^(\d*\.?\d*)$/.test(v)) setProductForm({ ...productForm, price: v }); }}
-                      placeholder="0.00" className={inputCls} />
+            <form onSubmit={handleProductSubmit} className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-6">
+                  <Field label="Product Name">
+                    <input type="text" required value={productForm.title}
+                      onChange={e => setProductForm({ ...productForm, title: e.target.value, slug: slugify(e.target.value) })}
+                      placeholder="e.g. Classic Oxford Shirt" className={inputCls} />
                   </Field>
-                  <Field label="Our Cost (€)" hint="— private">
-                    <input type="text" inputMode="decimal" value={productForm.cost_price}
-                      onChange={e => { const v = e.target.value; if (/^(\d*\.?\d*)$/.test(v)) setProductForm({ ...productForm, cost_price: v }); }}
-                      placeholder="0.00" className={`${inputCls} border-amber-200 bg-amber-50 focus:border-amber-400`} />
+                  <Field label="URL Slug" hint="— auto-generated">
+                    <input type="text" required value={productForm.slug}
+                      onChange={e => setProductForm({ ...productForm, slug: e.target.value })}
+                      placeholder="classic-oxford-shirt" className={`${inputCls} font-mono text-xs`} />
                   </Field>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <Field label="Category">
-                    <select value={productForm.category} onChange={e => setProductForm({ ...productForm, category: e.target.value })} className={inputCls}>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Field label="Selling Price (€)">
+                      <input type="text" inputMode="decimal" required value={productForm.price}
+                        onChange={e => { const v = e.target.value; if (/^(\d*\.?\d*)$/.test(v)) setProductForm({ ...productForm, price: v }); }}
+                        placeholder="0.00" className={inputCls} />
+                    </Field>
+                    <Field label="Our Cost (€)" hint="— private">
+                      <input type="text" inputMode="decimal" value={productForm.cost_price}
+                        onChange={e => { const v = e.target.value; if (/^(\d*\.?\d*)$/.test(v)) setProductForm({ ...productForm, cost_price: v }); }}
+                        placeholder="0.00" className={`${inputCls} border-amber-200 bg-amber-50 focus:border-amber-400`} />
+                    </Field>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Field label="Category">
+                      <select value={productForm.category} onChange={e => setProductForm({ ...productForm, category: e.target.value })} className={inputCls}>
+                        <option value="">— None —</option>
+                        {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                      </select>
+                    </Field>
+                    <Field label="Visibility">
+                      <select value={productForm.status} onChange={e => setProductForm({ ...productForm, status: e.target.value })} className={inputCls}>
+                        <option value="active">Live (visible)</option>
+                        <option value="archived">Hidden</option>
+                      </select>
+                    </Field>
+                  </div>
+                  <Field label="Collection" hint="— optional">
+                    <select value={productForm.collection_id} onChange={e => setProductForm({ ...productForm, collection_id: e.target.value })} className={inputCls}>
                       <option value="">— None —</option>
-                      {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                      {buildParentOptions(collections).map(opt => (
+                        <option key={opt.id} value={opt.id}>{opt.label}</option>
+                      ))}
                     </select>
                   </Field>
-                  <Field label="Visibility">
-                    <select value={productForm.status} onChange={e => setProductForm({ ...productForm, status: e.target.value })} className={inputCls}>
-                      <option value="active">Live (visible)</option>
-                      <option value="archived">Hidden</option>
-                    </select>
+                  <Field label="Description" hint="— optional">
+                    <textarea value={productForm.description} rows={5}
+                      onChange={e => setProductForm({ ...productForm, description: e.target.value })}
+                      placeholder="Describe the product..." className={`${inputCls} resize-none`} />
                   </Field>
                 </div>
-                <Field label="Collection" hint="— optional">
-                  <select value={productForm.collection_id} onChange={e => setProductForm({ ...productForm, collection_id: e.target.value })} className={inputCls}>
-                    <option value="">— None —</option>
-                    {buildParentOptions(collections).map(opt => (
-                      <option key={opt.id} value={opt.id}>{opt.label}</option>
-                    ))}
-                  </select>
-                </Field>
-                <Field label="Description" hint="— optional">
-                  <textarea value={productForm.description} rows={5}
-                    onChange={e => setProductForm({ ...productForm, description: e.target.value })}
-                    placeholder="Describe the product..." className={`${inputCls} resize-none`} />
-                </Field>
-              </div>
-              <div className="space-y-6">
-                <UploadBox value={productForm.image_url} onChange={url => setProductForm({ ...productForm, image_url: url })} />
-                {productForm.image_url && (
-                  <div className="text-xs text-stone-400 break-all font-mono border border-stone-100 bg-stone-50 px-3 py-2">{productForm.image_url}</div>
-                )}
-                {productForm.price && productForm.cost_price && (() => {
-                  const sell = parseFloat(productForm.price);
-                  const cost = parseFloat(productForm.cost_price);
-                  const margin = sell - cost;
-                  const pct = ((margin / sell) * 100).toFixed(1);
-                  return (
-                    <div className="border border-stone-200 bg-white p-4">
-                      <p className="text-xs font-semibold uppercase tracking-widest text-stone-400 mb-2">Margin</p>
-                      <div className="flex items-baseline gap-2">
-                        <span className={`text-2xl font-bold ${margin >= 0 ? 'text-green-600' : 'text-red-500'}`}>€{margin.toFixed(2)}</span>
-                        <span className="text-sm text-stone-400">{pct}% margin</span>
+                <div className="space-y-6">
+                  <UploadBox value={productForm.image_url} onChange={url => setProductForm({ ...productForm, image_url: url })} />
+                  {productForm.image_url && (
+                    <div className="text-xs text-stone-400 break-all font-mono border border-stone-100 bg-stone-50 px-3 py-2">{productForm.image_url}</div>
+                  )}
+                  {productForm.price && productForm.cost_price && (() => {
+                    const sell = parseFloat(productForm.price);
+                    const cost = parseFloat(productForm.cost_price);
+                    const margin = sell - cost;
+                    const pct = ((margin / sell) * 100).toFixed(1);
+                    return (
+                      <div className="border border-stone-200 bg-white p-4">
+                        <p className="text-xs font-semibold uppercase tracking-widest text-stone-400 mb-2">Margin</p>
+                        <div className="flex items-baseline gap-2">
+                          <span className={`text-2xl font-bold ${margin >= 0 ? 'text-green-600' : 'text-red-500'}`}>€{margin.toFixed(2)}</span>
+                          <span className="text-sm text-stone-400">{pct}% margin</span>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })()}
+                    );
+                  })()}
+                </div>
               </div>
-              <div className="md:col-span-2 flex items-center gap-4 pt-2 border-t border-stone-200">
+
+              {/* ── VARIANTS SECTION ── */}
+              <div className="border-t border-stone-200 pt-8">
+                <div className="mb-4">
+                  <h2 className="text-sm font-semibold uppercase tracking-widest text-stone-700">Variants</h2>
+                  <p className="text-xs text-stone-400 mt-1">Add options like Color, Size, or Type that customers can choose on the product page.</p>
+                </div>
+                <VariantsEditor variants={variants} onChange={setVariants} />
+              </div>
+
+              <div className="flex items-center gap-4 pt-2 border-t border-stone-200">
                 <button type="submit" disabled={saving}
                   className="bg-stone-900 text-white text-xs font-semibold uppercase tracking-wider px-8 py-3 hover:bg-stone-700 transition-colors disabled:opacity-50">
                   {saving ? 'Saving…' : editingProduct ? 'Save Changes' : 'Add Product'}
                 </button>
                 {editingProduct && (
-                  <button type="button" onClick={() => { setTab('products'); setEditingProduct(null); setProductForm({ ...EMPTY_PRODUCT }); setMsg(null); }}
+                  <button type="button" onClick={() => { setTab('products'); setEditingProduct(null); setProductForm({ ...EMPTY_PRODUCT }); setVariants([]); setMsg(null); }}
                     className="text-xs text-stone-400 hover:text-stone-700 transition-colors">Cancel</button>
                 )}
               </div>
@@ -643,7 +796,9 @@ export default function AdminPage() {
                       </div>
                       <div className="flex items-center gap-3 flex-shrink-0">
                         <button onClick={() => startEditCategory(c)} className="text-xs font-medium text-stone-500 hover:text-stone-900 transition-colors px-2 py-1">Edit</button>
-                        <button onClick={() => handleDeleteCategory(c.id)} disabled={deleting === c.id} className="text-xs text-stone-300 hover:text-red-500 transition-colors px-2 py-1 disabled:opacity-40">{deleting === c.id ? '...' : 'Delete'}</button>
+                        <button onClick={() => handleDeleteCategory(c.id)} disabled={deleting === c.id} className="text-xs text-stone-300 hover:text-red-500 transition-colors px-2 py-1 disabled:opacity-40">
+                          {deleting === c.id ? '...' : 'Delete'}
+                        </button>
                       </div>
                     </div>
                   );
@@ -671,49 +826,29 @@ export default function AdminPage() {
               <Field label="Category Name">
                 <input type="text" required value={categoryForm.name}
                   onChange={e => setCategoryForm({ ...categoryForm, name: e.target.value, slug: slugify(e.target.value) })}
-                  placeholder="e.g. Shirts" className={inputCls} />
+                  placeholder="e.g. T-Shirts" className={inputCls} />
               </Field>
               <Field label="URL Slug" hint="— auto-generated">
                 <input type="text" required value={categoryForm.slug}
                   onChange={e => setCategoryForm({ ...categoryForm, slug: e.target.value })}
-                  placeholder="shirts" className={`${inputCls} font-mono text-xs`} />
+                  placeholder="t-shirts" className={`${inputCls} font-mono text-xs`} />
               </Field>
-              <Field label="Sort Order" hint="— lower = first">
+              <Field label="Sort Order">
                 <input type="number" value={categoryForm.sort_order}
                   onChange={e => setCategoryForm({ ...categoryForm, sort_order: e.target.value })}
                   className={inputCls} />
               </Field>
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-widest text-stone-500 mb-3">Show filter on</label>
-                <div className="border border-stone-200 bg-white divide-y divide-stone-100">
-                  {SHOW_IN_OPTIONS.map(opt => {
-                    const checked = categoryForm.show_in.includes(opt.value);
-                    return (
-                      <label key={opt.value} className="flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-stone-50 transition-colors">
-                        <div onClick={() => toggleShowIn(opt.value)}
-                          className={`w-5 h-5 flex-shrink-0 border-2 flex items-center justify-center transition-colors cursor-pointer ${
-                            checked ? 'border-stone-800 bg-stone-800' : 'border-stone-300 bg-white'
-                          }`}>
-                          {checked && (
-                            <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                              <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-stone-900">{opt.label}</p>
-                          <p className="text-xs text-stone-400 mt-0.5">
-                            {opt.value === 'shop' ? 'Filter bar on /shop (All Products page)' : 'Filter bar on each /collections/[slug] page'}
-                          </p>
-                        </div>
-                      </label>
-                    );
-                  })}
+              <Field label="Show In">
+                <div className="flex gap-3 flex-wrap">
+                  {SHOW_IN_OPTIONS.map(opt => (
+                    <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={categoryForm.show_in.includes(opt.value)} onChange={() => toggleShowIn(opt.value)}
+                        className="w-4 h-4 border-stone-300" />
+                      <span className="text-sm text-stone-600">{opt.label}</span>
+                    </label>
+                  ))}
                 </div>
-                {categoryForm.show_in.length === 0 && (
-                  <p className="text-xs text-amber-600 mt-2">⚠ This category won\'t appear as a filter anywhere.</p>
-                )}
-              </div>
+              </Field>
               <div className="flex items-center gap-4 pt-2 border-t border-stone-200">
                 <button type="submit" disabled={saving}
                   className="bg-stone-900 text-white text-xs font-semibold uppercase tracking-wider px-8 py-3 hover:bg-stone-700 transition-colors disabled:opacity-50">
@@ -752,14 +887,7 @@ export default function AdminPage() {
             ) : (
               <div className="bg-white border border-stone-200 divide-y divide-stone-100">
                 {collectionTree.map(node => (
-                  <CollectionTreeRow
-                    key={node.id}
-                    node={node as Collection & { children: (Collection & { children: Collection[] })[] }}
-                    depth={0}
-                    onEdit={startEditCollection}
-                    onDelete={handleDeleteCollection}
-                    deleting={deleting}
-                  />
+                  <CollectionTreeRow key={node.id} node={node} depth={0} onEdit={startEditCollection} onDelete={handleDeleteCollection} deleting={deleting} />
                 ))}
               </div>
             )}
@@ -791,24 +919,20 @@ export default function AdminPage() {
                   onChange={e => setCollectionForm({ ...collectionForm, slug: e.target.value })}
                   placeholder="summer-2025" className={`${inputCls} font-mono text-xs`} />
               </Field>
-              <Field label="Parent Collection" hint="— optional, makes this a subcollection">
-                <select
-                  value={collectionForm.parent_id}
-                  onChange={e => setCollectionForm({ ...collectionForm, parent_id: e.target.value })}
-                  className={inputCls}
-                >
-                  <option value="">— None (top-level) —</option>
+              <Field label="Parent Collection" hint="— optional">
+                <select value={collectionForm.parent_id} onChange={e => setCollectionForm({ ...collectionForm, parent_id: e.target.value })} className={inputCls}>
+                  <option value="">— Top level —</option>
                   {buildParentOptions(collections, editingCollection?.id).map(opt => (
                     <option key={opt.id} value={opt.id}>{opt.label}</option>
                   ))}
                 </select>
               </Field>
-              <Field label="Sort Order" hint="— lower = first">
+              <Field label="Sort Order">
                 <input type="number" value={collectionForm.sort_order}
                   onChange={e => setCollectionForm({ ...collectionForm, sort_order: e.target.value })}
                   className={inputCls} />
               </Field>
-              <UploadBox value={collectionForm.image_url} onChange={url => setCollectionForm({ ...collectionForm, image_url: url })} label="Cover Photo" />
+              <UploadBox value={collectionForm.image_url} onChange={url => setCollectionForm({ ...collectionForm, image_url: url })} label="Cover Image" />
               <div className="flex items-center gap-4 pt-2 border-t border-stone-200">
                 <button type="submit" disabled={saving}
                   className="bg-stone-900 text-white text-xs font-semibold uppercase tracking-wider px-8 py-3 hover:bg-stone-700 transition-colors disabled:opacity-50">
