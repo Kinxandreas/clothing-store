@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import sharp from 'sharp';
 
 // Service-role client — bypasses RLS for admin checks
 function getServiceSupabase() {
@@ -45,20 +44,23 @@ export async function POST(req: NextRequest) {
   const file = formData.get('file') as File | null;
   if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 });
 
+  // Accept any image type — no sharp processing needed
+  if (!file.type.startsWith('image/')) {
+    return NextResponse.json({ error: 'Only image files are allowed' }, { status: 400 });
+  }
+
   const arrayBuffer = await file.arrayBuffer();
-  const inputBuffer = Buffer.from(arrayBuffer);
+  const buffer = Buffer.from(arrayBuffer);
 
-  const webpBuffer = await sharp(inputBuffer)
-    .webp({ quality: 85 })
-    .toBuffer();
-
-  const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
+  // Preserve original extension, fallback to jpg
+  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+  const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
   const serviceClient = getServiceSupabase();
 
   const { error } = await serviceClient.storage
     .from('product-images')
-    .upload(fileName, webpBuffer, { contentType: 'image/webp', upsert: false });
+    .upload(fileName, buffer, { contentType: file.type, upsert: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
