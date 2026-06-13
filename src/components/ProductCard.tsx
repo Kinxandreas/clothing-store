@@ -10,6 +10,12 @@ export default function ProductCard({ product }: { product: Product }) {
   const image2 = images[1]?.image_url;
   const [hovered, setHovered] = useState(false);
 
+  // Guard against Postgres returning price as a string
+  const price =
+    typeof product.price === 'number'
+      ? product.price
+      : parseFloat(String(product.price)) || 0;
+
   return (
     <Link
       href={`/products/${product.slug}`}
@@ -69,7 +75,7 @@ export default function ProductCard({ product }: { product: Product }) {
           <p className="text-sm font-normal text-ink leading-snug group-hover:underline underline-offset-2 transition-all">
             {product.title}
           </p>
-          <p className="text-sm text-stone-500 tabular-nums flex-shrink-0">€{product.price.toFixed(2)}</p>
+          <p className="text-sm text-stone-500 tabular-nums flex-shrink-0">€{price.toFixed(2)}</p>
         </div>
         {product.category && (
           <p className="eyebrow text-stone-400">{product.category}</p>

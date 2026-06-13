@@ -37,11 +37,19 @@ export async function GET() {
   const supabase = getServiceSupabase();
   const { data, error } = await supabase
     .from('products')
-    .select('*')
+    .select('*, product_images(image_url, sort_order)')
     .order('created_at', { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+
+  // Flatten the first image URL so the admin thumbnail can read it directly
+  const products = (data ?? []).map((p: Record<string, unknown> & { product_images?: { image_url: string; sort_order: number }[] }) => {
+    const images = p.product_images ?? [];
+    const sorted = [...images].sort((a, b) => a.sort_order - b.sort_order);
+    return { ...p, image_url: sorted[0]?.image_url ?? null };
+  });
+
+  return NextResponse.json(products);
 }
 
 export async function POST(req: NextRequest) {
@@ -50,7 +58,24 @@ export async function POST(req: NextRequest) {
 
   const supabase = getServiceSupabase();
   const body = await req.json();
-  const { data, error } = await supabase.from('products').insert([body]).select().single();
+
+  // Strip image_url — it belongs in product_images, not products
+  const { image_url, ...productPayload } = body;
+
+  const { data, error } = await supabase
+    .from('products')
+    .insert([productPayload])
+    .select()
+    .single();
+
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Insert the primary image into product_images
+  if (image_url && data?.id) {
+    await supabase.from('product_images').insert([
+      { product_id: data.id, image_url, sort_order: 0 },
+    ]);
+  }
+
   return NextResponse.json(data);
 }
