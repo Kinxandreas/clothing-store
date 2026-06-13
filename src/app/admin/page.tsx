@@ -31,11 +31,12 @@ interface Collection {
   slug: string;
   image_url: string | null;
   sort_order: number;
+  parent_id: string | null;
 }
 
 const EMPTY_PRODUCT = { title: '', slug: '', description: '', price: '', cost_price: '', category: '', collection_id: '', status: 'active', image_url: '' };
 const EMPTY_CATEGORY = { name: '', slug: '', sort_order: '0', show_in: ['shop', 'collections'] as string[] };
-const EMPTY_COLLECTION = { name: '', slug: '', image_url: '', sort_order: '0' };
+const EMPTY_COLLECTION = { name: '', slug: '', image_url: '', sort_order: '0', parent_id: '' };
 
 const SHOW_IN_OPTIONS = [
   { value: 'shop', label: 'All Products page' },
@@ -46,11 +47,12 @@ function slugify(str: string) {
   return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
 
-function Pill({ label, color }: { label: string; color: 'green' | 'stone' | 'amber' }) {
+function Pill({ label, color }: { label: string; color: 'green' | 'stone' | 'amber' | 'blue' }) {
   const cls = {
     green: 'bg-green-50 text-green-700 border-green-200',
     stone: 'bg-stone-100 text-stone-500 border-stone-200',
     amber: 'bg-amber-50 text-amber-700 border-amber-200',
+    blue: 'bg-blue-50 text-blue-700 border-blue-200',
   }[color];
   return <span className={`inline-flex items-center px-2 py-0.5 text-[11px] font-medium tracking-wide uppercase border ${cls}`}>{label}</span>;
 }
@@ -133,6 +135,73 @@ function UploadBox({ value, onChange, label = 'Photo' }: { value: string; onChan
 }
 
 const inputCls = "w-full border border-stone-200 bg-white px-4 py-3 text-sm focus:outline-none focus:border-stone-500 transition-colors placeholder:text-stone-300";
+
+// Recursive tree builder for collections list
+function buildTree(all: Collection[]): (Collection & { children: Collection[] })[] {
+  const map = new Map<string, Collection & { children: Collection[] }>();
+  all.forEach(c => map.set(c.id, { ...c, children: [] }));
+  const roots: (Collection & { children: Collection[] })[] = [];
+  map.forEach(node => {
+    if (node.parent_id && map.has(node.parent_id)) {
+      map.get(node.parent_id)!.children.push(node);
+    } else {
+      roots.push(node);
+    }
+  });
+  return roots;
+}
+
+function CollectionTreeRow({
+  node, depth, onEdit, onDelete, deleting
+}: {
+  node: Collection & { children: (Collection & { children: Collection[] })[] };
+  depth: number;
+  onEdit: (c: Collection) => void;
+  onDelete: (id: string) => void;
+  deleting: string | null;
+}) {
+  return (
+    <>
+      <div
+        className="flex items-center gap-4 px-5 py-4 hover:bg-stone-50 transition-colors"
+        style={{ paddingLeft: `${20 + depth * 28}px` }}
+      >
+        {depth > 0 && (
+          <span className="text-stone-300 select-none" style={{ marginLeft: '-16px', marginRight: '4px' }}>↳</span>
+        )}
+        <div className="w-10 h-10 flex-shrink-0 bg-stone-100 border border-stone-100 overflow-hidden">
+          {node.image_url ? (
+            <Image src={node.image_url} alt={node.name} width={40} height={40} className="w-full h-full object-cover" unoptimized />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-stone-300">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+              </svg>
+            </div>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-stone-900">{node.name}</p>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className="text-xs text-stone-400 font-mono">{node.slug}</span>
+            {node.children.length > 0 && (
+              <Pill label={`${node.children.length} sub`} color="blue" />
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <button onClick={() => onEdit(node)} className="text-xs font-medium text-stone-500 hover:text-stone-900 transition-colors px-2 py-1">Edit</button>
+          <button onClick={() => onDelete(node.id)} disabled={deleting === node.id} className="text-xs text-stone-300 hover:text-red-500 transition-colors px-2 py-1 disabled:opacity-40">
+            {deleting === node.id ? '...' : 'Delete'}
+          </button>
+        </div>
+      </div>
+      {node.children.map(child => (
+        <CollectionTreeRow key={child.id} node={child as Collection & { children: (Collection & { children: Collection[] })[] }} depth={depth + 1} onEdit={onEdit} onDelete={onDelete} deleting={deleting} />
+      ))}
+    </>
+  );
+}
 
 export default function AdminPage() {
   const [tab, setTab] = useState<Tab>('products');
@@ -251,9 +320,7 @@ export default function AdminPage() {
   const startEditCategory = (c: Category) => {
     setEditingCategory(c);
     setCategoryForm({
-      name: c.name,
-      slug: c.slug,
-      sort_order: String(c.sort_order),
+      name: c.name, slug: c.slug, sort_order: String(c.sort_order),
       show_in: Array.isArray(c.show_in) ? c.show_in : ['shop', 'collections'],
     });
     setMsg(null); setTab('add-category'); window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -278,7 +345,13 @@ export default function AdminPage() {
   // ── COLLECTION handlers ──
   const handleCollectionSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setSaving(true);
-    const payload = { name: collectionForm.name, slug: collectionForm.slug || slugify(collectionForm.name), image_url: collectionForm.image_url || null, sort_order: parseInt(collectionForm.sort_order) || 0 };
+    const payload = {
+      name: collectionForm.name,
+      slug: collectionForm.slug || slugify(collectionForm.name),
+      image_url: collectionForm.image_url || null,
+      sort_order: parseInt(collectionForm.sort_order) || 0,
+      parent_id: collectionForm.parent_id || null,
+    };
     const url = editingCollection ? `/api/admin/collections/${editingCollection.id}` : '/api/admin/collections';
     const method = editingCollection ? 'PATCH' : 'POST';
     const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
@@ -292,12 +365,15 @@ export default function AdminPage() {
 
   const startEditCollection = (c: Collection) => {
     setEditingCollection(c);
-    setCollectionForm({ name: c.name, slug: c.slug, image_url: c.image_url || '', sort_order: String(c.sort_order) });
+    setCollectionForm({
+      name: c.name, slug: c.slug, image_url: c.image_url || '',
+      sort_order: String(c.sort_order), parent_id: c.parent_id || '',
+    });
     setMsg(null); setTab('add-collection'); window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDeleteCollection = async (id: string) => {
-    if (!confirm('Delete this collection?')) return;
+    if (!confirm('Delete this collection? Subcollections will become top-level.')) return;
     setDeleting(id);
     await fetch(`/api/admin/collections/${id}`, { method: 'DELETE' });
     setDeleting(null); setCollections(prev => prev.filter(c => c.id !== id));
@@ -306,6 +382,20 @@ export default function AdminPage() {
   const filteredProducts = products.filter(p =>
     !search || p.title.toLowerCase().includes(search.toLowerCase()) || (p.category || '').toLowerCase().includes(search.toLowerCase())
   );
+
+  // Build flat label for parent dropdown (with depth prefix)
+  function buildParentOptions(all: Collection[], excludeId?: string): { id: string; label: string }[] {
+    function walk(nodes: (Collection & { children: Collection[] })[], depth: number): { id: string; label: string }[] {
+      return nodes.flatMap(n => [
+        { id: n.id, label: '\u00a0'.repeat(depth * 3) + (depth > 0 ? '↳ ' : '') + n.name },
+        ...walk(n.children as (Collection & { children: Collection[] })[], depth + 1),
+      ]);
+    }
+    const tree = buildTree(all.filter(c => c.id !== excludeId));
+    return walk(tree, 0);
+  }
+
+  const collectionTree = buildTree(collections);
 
   return (
     <div className="min-h-screen bg-stone-50">
@@ -462,7 +552,9 @@ export default function AdminPage() {
                 <Field label="Collection" hint="— optional">
                   <select value={productForm.collection_id} onChange={e => setProductForm({ ...productForm, collection_id: e.target.value })} className={inputCls}>
                     <option value="">— None —</option>
-                    {collections.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    {buildParentOptions(collections).map(opt => (
+                      <option key={opt.id} value={opt.id}>{opt.label}</option>
+                    ))}
                   </select>
                 </Field>
                 <Field label="Description" hint="— optional">
@@ -591,25 +683,17 @@ export default function AdminPage() {
                   onChange={e => setCategoryForm({ ...categoryForm, sort_order: e.target.value })}
                   className={inputCls} />
               </Field>
-
-              {/* Show in — checkbox group */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-widest text-stone-500 mb-3">
-                  Show filter on
-                </label>
+                <label className="block text-xs font-semibold uppercase tracking-widest text-stone-500 mb-3">Show filter on</label>
                 <div className="border border-stone-200 bg-white divide-y divide-stone-100">
                   {SHOW_IN_OPTIONS.map(opt => {
                     const checked = categoryForm.show_in.includes(opt.value);
                     return (
                       <label key={opt.value} className="flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-stone-50 transition-colors">
-                        <div
-                          onClick={() => toggleShowIn(opt.value)}
+                        <div onClick={() => toggleShowIn(opt.value)}
                           className={`w-5 h-5 flex-shrink-0 border-2 flex items-center justify-center transition-colors cursor-pointer ${
-                            checked
-                              ? 'border-stone-800 bg-stone-800'
-                              : 'border-stone-300 bg-white'
-                          }`}
-                        >
+                            checked ? 'border-stone-800 bg-stone-800' : 'border-stone-300 bg-white'
+                          }`}>
                           {checked && (
                             <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
                               <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
@@ -630,7 +714,6 @@ export default function AdminPage() {
                   <p className="text-xs text-amber-600 mt-2">⚠ This category won\'t appear as a filter anywhere.</p>
                 )}
               </div>
-
               <div className="flex items-center gap-4 pt-2 border-t border-stone-200">
                 <button type="submit" disabled={saving}
                   className="bg-stone-900 text-white text-xs font-semibold uppercase tracking-wider px-8 py-3 hover:bg-stone-700 transition-colors disabled:opacity-50">
@@ -668,26 +751,15 @@ export default function AdminPage() {
               </div>
             ) : (
               <div className="bg-white border border-stone-200 divide-y divide-stone-100">
-                {collections.map(c => (
-                  <div key={c.id} className="flex items-center gap-4 px-5 py-4 hover:bg-stone-50 transition-colors">
-                    <div className="w-14 h-14 flex-shrink-0 bg-stone-100 border border-stone-100 overflow-hidden">
-                      {c.image_url ? (
-                        <Image src={c.image_url} alt={c.name} width={56} height={56} className="w-full h-full object-cover" unoptimized />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-stone-300"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-stone-900">{c.name}</p>
-                      <p className="text-xs text-stone-400 font-mono mt-0.5">{c.slug}</p>
-                    </div>
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                      <button onClick={() => startEditCollection(c)} className="text-xs font-medium text-stone-500 hover:text-stone-900 transition-colors px-2 py-1">Edit</button>
-                      <button onClick={() => handleDeleteCollection(c.id)} disabled={deleting === c.id} className="text-xs text-stone-300 hover:text-red-500 transition-colors px-2 py-1 disabled:opacity-40">{deleting === c.id ? '...' : 'Delete'}</button>
-                    </div>
-2                  </div>
+                {collectionTree.map(node => (
+                  <CollectionTreeRow
+                    key={node.id}
+                    node={node as Collection & { children: (Collection & { children: Collection[] })[] }}
+                    depth={0}
+                    onEdit={startEditCollection}
+                    onDelete={handleDeleteCollection}
+                    deleting={deleting}
+                  />
                 ))}
               </div>
             )}
@@ -718,6 +790,18 @@ export default function AdminPage() {
                 <input type="text" required value={collectionForm.slug}
                   onChange={e => setCollectionForm({ ...collectionForm, slug: e.target.value })}
                   placeholder="summer-2025" className={`${inputCls} font-mono text-xs`} />
+              </Field>
+              <Field label="Parent Collection" hint="— optional, makes this a subcollection">
+                <select
+                  value={collectionForm.parent_id}
+                  onChange={e => setCollectionForm({ ...collectionForm, parent_id: e.target.value })}
+                  className={inputCls}
+                >
+                  <option value="">— None (top-level) —</option>
+                  {buildParentOptions(collections, editingCollection?.id).map(opt => (
+                    <option key={opt.id} value={opt.id}>{opt.label}</option>
+                  ))}
+                </select>
               </Field>
               <Field label="Sort Order" hint="— lower = first">
                 <input type="number" value={collectionForm.sort_order}
