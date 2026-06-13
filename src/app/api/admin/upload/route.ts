@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import sharp from 'sharp';
 
 async function getAdminSupabase() {
   const cookieStore = await cookies();
@@ -27,14 +28,19 @@ export async function POST(req: NextRequest) {
   const file = formData.get('file') as File | null;
   if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 });
 
-  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-  const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
   const arrayBuffer = await file.arrayBuffer();
-  const buffer = new Uint8Array(arrayBuffer);
+  const inputBuffer = Buffer.from(arrayBuffer);
+
+  // Convert every upload to WebP — works with jpg, png, jfif, heic, bmp, tiff, etc.
+  const webpBuffer = await sharp(inputBuffer)
+    .webp({ quality: 85 })
+    .toBuffer();
+
+  const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
 
   const { error } = await supabase.storage
     .from('product-images')
-    .upload(fileName, buffer, { contentType: file.type, upsert: false });
+    .upload(fileName, webpBuffer, { contentType: 'image/webp', upsert: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
