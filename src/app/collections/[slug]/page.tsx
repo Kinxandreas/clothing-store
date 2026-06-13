@@ -3,24 +3,27 @@ import { createClient } from '@/lib/supabase/server';
 import ProductCard from '@/components/ProductCard';
 import { Product } from '@/types/database';
 
-const collectionMeta: Record<string, { label: string; description: string }> = {
-  'collection-1': { label: 'Collection 1', description: 'The first drop from KINX.' },
-  'collection-2': { label: 'Collection 2', description: 'Bold pieces from our second release.' },
-  'collection-3': { label: 'Collection 3', description: 'Street-ready fits for every occasion.' },
-  'collection-4': { label: 'Collection 4', description: 'Limited edition — built for the streets.' },
-  'collection-5': { label: 'Collection 5', description: 'The latest drop. Fresh out the box.' },
-};
-
 export default async function CollectionPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const meta = collectionMeta[slug] ?? { label: slug, description: '' };
-
   const supabase = await createClient();
-  const { data: products } = await supabase
-    .from('products')
-    .select('*, product_images(*)')
-    .eq('status', 'active')
-    .eq('collection', slug);
+
+  // 1. Look up the collection row by slug
+  const { data: collection } = await supabase
+    .from('collections')
+    .select('id, name, slug')
+    .eq('slug', slug)
+    .single();
+
+  // 2. Fetch products linked to that collection_id
+  const { data: products } = collection
+    ? await supabase
+        .from('products')
+        .select('*, product_images(*)')
+        .eq('status', 'active')
+        .eq('collection_id', collection.id)
+    : { data: [] };
+
+  const label = collection?.name ?? slug;
 
   return (
     <div className="min-h-screen bg-paper">
@@ -34,10 +37,7 @@ export default async function CollectionPage({ params }: { params: Promise<{ slu
       {/* Header */}
       <div className="max-w-[1400px] mx-auto px-6 md:px-10 pt-6 pb-12">
         <span className="eyebrow text-stone-400 block mb-3">Collection</span>
-        <h1 className="display" style={{ fontSize: 'clamp(2.5rem, 5vw, 5rem)' }}>{meta.label}</h1>
-        {meta.description && (
-          <p className="eyebrow text-stone-400 mt-3">{meta.description}</p>
-        )}
+        <h1 className="display" style={{ fontSize: 'clamp(2.5rem, 5vw, 5rem)' }}>{label}</h1>
       </div>
 
       {/* Products */}
