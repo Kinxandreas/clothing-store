@@ -28,7 +28,6 @@ async function requireAdmin() {
   return data ? user : null;
 }
 
-// GET /api/admin/products/[id]/variants
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireAdmin();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -43,7 +42,6 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
   return NextResponse.json(data ?? []);
 }
 
-// POST /api/admin/products/[id]/variants  — body: { label, value, sort_order? }
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireAdmin();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -52,24 +50,31 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const body = await req.json();
   const { data, error } = await supabase
     .from('product_variants')
-    .insert([{ product_id: id, label: body.label, value: body.value, sort_order: body.sort_order ?? 0 }])
+    .insert([{ product_id: id, label: body.label, value: body.value, image_url: body.image_url ?? null, sort_order: body.sort_order ?? 0 }])
     .select()
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
 }
 
-// PUT /api/admin/products/[id]/variants  — full replace: body: { variants: [{label,value,sort_order}] }
+// PUT — full replace, accepts image_url per variant
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireAdmin();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const supabase = getServiceSupabase();
   const { id } = await params;
-  const { variants } = await req.json() as { variants: { label: string; value: string; sort_order: number }[] };
-  // Delete all existing then insert fresh
+  const { variants } = await req.json() as {
+    variants: { label: string; value: string; image_url?: string | null; sort_order: number }[]
+  };
   await supabase.from('product_variants').delete().eq('product_id', id);
   if (variants && variants.length > 0) {
-    const rows = variants.map((v, i) => ({ product_id: id, label: v.label, value: v.value, sort_order: i }));
+    const rows = variants.map((v, i) => ({
+      product_id: id,
+      label: v.label,
+      value: v.value,
+      image_url: v.image_url ?? null,
+      sort_order: i,
+    }));
     const { error } = await supabase.from('product_variants').insert(rows);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   }

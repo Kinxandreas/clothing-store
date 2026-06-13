@@ -4,6 +4,14 @@ import Image from 'next/image';
 import AddToCartButton from '@/components/AddToCartButton';
 import Link from 'next/link';
 
+interface ProductVariant {
+  id: string;
+  label: string;
+  value: string;
+  image_url: string | null;
+  sort_order: number;
+}
+
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const supabase = await createClient();
@@ -16,14 +24,25 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   if (!product) notFound();
 
-  const images: { image_url: string }[] = product.product_images || [];
+  const images: { image_url: string; sort_order: number }[] =
+    (product.product_images || []).sort((a: { sort_order: number }, b: { sort_order: number }) => a.sort_order - b.sort_order);
   const mainImage = images[0]?.image_url;
-  const sizes = [...new Set(
-    product.product_variants?.map((v: { size: string }) => v.size).filter(Boolean)
-  )] as string[];
-  const colors = [...new Set(
-    product.product_variants?.map((v: { color: string }) => v.color).filter(Boolean)
-  )] as string[];
+
+  const allVariants: ProductVariant[] = (product.product_variants || []).sort(
+    (a: ProductVariant, b: ProductVariant) => a.sort_order - b.sort_order
+  );
+
+  // Group by label (Color, Size, etc.)
+  const variantGroups = allVariants.reduce<Record<string, ProductVariant[]>>((acc, v) => {
+    if (!acc[v.label]) acc[v.label] = [];
+    acc[v.label].push(v);
+    return acc;
+  }, {});
+
+  // Collect variants that have an image (used for image-swap on the client)
+  const variantsWithImages = allVariants.filter(v => v.image_url);
+
+  const price = typeof product.price === 'number' ? product.price : parseFloat(String(product.price)) || 0;
 
   return (
     <div className="min-h-screen">
@@ -32,7 +51,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
           {/* ── Image column ── */}
           <div className="space-y-3 scale-in">
-            <div className="relative img-container bg-stone-100" style={{ aspectRatio: '3/4' }}>
+            <div
+              className="relative img-container bg-stone-100"
+              style={{ aspectRatio: '3/4' }}
+              id="main-image-wrap"
+            >
               {mainImage ? (
                 <Image
                   src={mainImage}
@@ -41,6 +64,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                   className="object-cover"
                   priority
                   sizes="(max-width: 768px) 100vw, 50vw"
+                  id="main-product-image"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
@@ -79,7 +103,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               {product.title}
             </h1>
             <p className="text-2xl font-light text-stone-600 mb-8 tabular-nums fade-up-delay-2">
-              €{product.price.toFixed(2)}
+              €{price.toFixed(2)}
             </p>
 
             {product.description && (
@@ -90,8 +114,32 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
             <div className="border-t border-stone-200 mb-8" />
 
+            {/* ── Variant selectors ── */}
+            {Object.keys(variantGroups).length > 0 && (
+              <div className="space-y-5 mb-8 fade-up-delay-3">
+                {Object.entries(variantGroups).map(([label, options]) => (
+                  <div key={label}>
+                    <p className="eyebrow text-stone-500 mb-2">{label}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {options.map(opt => (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          data-variant-image={opt.image_url ?? ''}
+                          className="variant-btn px-4 py-2 border border-stone-200 text-sm text-stone-700 hover:border-stone-800 transition-colors"
+                          aria-label={`${label}: ${opt.value}`}
+                        >
+                          {opt.value}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div className="fade-up-delay-3">
-              <AddToCartButton product={product} sizes={sizes} colors={colors} />
+              <AddToCartButton product={product} sizes={[]} colors={[]} />
             </div>
 
             {/* Details accordion */}
@@ -113,6 +161,35 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           </div>
         </div>
       </div>
+
+      {/* Client-side image swap when a variant is clicked */}
+      <script dangerouslySetInnerHTML={{ __html: `
+        (function() {
+          var defaultSrc = ${JSON.stringify(mainImage ?? '')};
+          document.addEventListener('click', function(e) {
+            var btn = e.target.closest('.variant-btn');
+            if (!btn) return;
+            var imgEl = document.getElementById('main-product-image');
+            if (!imgEl) return;
+            var variantImg = btn.getAttribute('data-variant-image');
+            // Toggle: clicking same button again restores default
+            var isSame = btn.classList.contains('variant-active');
+            document.querySelectorAll('.variant-btn').forEach(function(b) {
+              b.classList.remove('variant-active');
+              b.style.borderColor = '';
+              b.style.fontWeight = '';
+            });
+            if (!isSame) {
+              btn.classList.add('variant-active');
+              btn.style.borderColor = '#1c1b19';
+              btn.style.fontWeight = '600';
+              if (variantImg) { imgEl.src = variantImg; imgEl.srcset = variantImg; }
+            } else {
+              if (defaultSrc) { imgEl.src = defaultSrc; imgEl.srcset = defaultSrc; }
+            }
+          });
+        })();
+      ` }} />
     </div>
   );
 }

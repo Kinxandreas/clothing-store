@@ -38,6 +38,7 @@ interface Variant {
   id?: string;
   label: string;
   value: string;
+  image_url?: string | null;
   sort_order: number;
 }
 
@@ -50,7 +51,6 @@ const SHOW_IN_OPTIONS = [
   { value: 'collections', label: 'Collections pages' },
 ];
 
-// Common variant label presets
 const LABEL_PRESETS = ['Color', 'Size', 'Type', 'Material', 'Style'];
 
 function slugify(str: string) {
@@ -144,6 +144,60 @@ function UploadBox({ value, onChange, label = 'Photo' }: { value: string; onChan
   );
 }
 
+// Inline tiny upload button used inside the variant row
+function VariantImageUpload({ value, onChange }: { value: string | null | undefined; onChange: (url: string | null) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const upload = async (file: File) => {
+    setUploading(true);
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
+    const data = await res.json();
+    setUploading(false);
+    if (res.ok) onChange(data.url);
+  };
+
+  const handleFile = (file: File | undefined) => {
+    if (!file || !file.type.startsWith('image/')) return;
+    upload(file);
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      {value ? (
+        <div className="relative w-10 h-10 border border-stone-200 bg-stone-100 overflow-hidden flex-shrink-0">
+          <Image src={value} alt="variant" fill className="object-cover" unoptimized sizes="40px" />
+          <button
+            type="button"
+            onClick={e => { e.stopPropagation(); onChange(null); }}
+            className="absolute top-0 right-0 bg-white/90 text-stone-400 hover:text-red-500 w-4 h-4 flex items-center justify-center text-[10px]"
+            aria-label="Remove image"
+          >×</button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+          className="w-10 h-10 border border-dashed border-stone-200 hover:border-stone-400 bg-stone-50 flex items-center justify-center transition-colors flex-shrink-0"
+          title="Add photo for this variant"
+        >
+          {uploading ? (
+            <span className="text-[10px] text-stone-400 animate-pulse">⋯</span>
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-stone-300">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+            </svg>
+          )}
+        </button>
+      )}
+      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={e => handleFile(e.target.files?.[0])} />
+    </div>
+  );
+}
+
 // ── Variants editor component ──
 function VariantsEditor({ variants, onChange }: { variants: Variant[]; onChange: (v: Variant[]) => void }) {
   const [newLabel, setNewLabel] = useState('Color');
@@ -153,16 +207,20 @@ function VariantsEditor({ variants, onChange }: { variants: Variant[]; onChange:
   const add = () => {
     const v = newValue.trim();
     if (!v) return;
-    onChange([...variants, { label: newLabel, value: v, sort_order: variants.length }]);
+    onChange([...variants, { label: newLabel, value: v, image_url: null, sort_order: variants.length }]);
     setNewValue('');
   };
 
   const remove = (i: number) => onChange(variants.filter((_, idx) => idx !== i));
 
+  const updateImage = (i: number, url: string | null) => {
+    onChange(variants.map((v, idx) => idx === i ? { ...v, image_url: url } : v));
+  };
+
   // Group variants by label for display
-  const groups = variants.reduce<Record<string, Variant[]>>((acc, v) => {
+  const groups = variants.reduce<Record<string, { variant: Variant; idx: number }[]>>((acc, v, idx) => {
     if (!acc[v.label]) acc[v.label] = [];
-    acc[v.label].push(v);
+    acc[v.label].push({ variant: v, idx });
     return acc;
   }, {});
 
@@ -174,25 +232,26 @@ function VariantsEditor({ variants, onChange }: { variants: Variant[]; onChange:
           <div className="px-4 py-2 bg-stone-50 border-b border-stone-200">
             <span className="text-xs font-semibold uppercase tracking-widest text-stone-500">{label}</span>
           </div>
-          <div className="flex flex-wrap gap-2 p-3">
-            {items.map((v) => {
-              const idx = variants.indexOf(v);
-              return (
-                <div key={idx} className="flex items-center gap-1.5 border border-stone-200 bg-stone-50 px-3 py-1.5">
-                  <span className="text-sm text-stone-700">{v.value}</span>
-                  <button
-                    type="button"
-                    onClick={() => remove(idx)}
-                    className="text-stone-300 hover:text-red-500 transition-colors ml-1"
-                    aria-label={`Remove ${v.value}`}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
-                  </button>
-                </div>
-              );
-            })}
+          <div className="divide-y divide-stone-100">
+            {items.map(({ variant: v, idx }) => (
+              <div key={idx} className="flex items-center gap-3 px-3 py-2.5">
+                {/* Variant image upload */}
+                <VariantImageUpload value={v.image_url} onChange={url => updateImage(idx, url)} />
+                {/* Value label */}
+                <span className="flex-1 text-sm text-stone-700">{v.value}</span>
+                {/* Remove */}
+                <button
+                  type="button"
+                  onClick={() => remove(idx)}
+                  className="text-stone-300 hover:text-red-500 transition-colors p-1"
+                  aria-label={`Remove ${v.value}`}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       ))}
@@ -204,10 +263,9 @@ function VariantsEditor({ variants, onChange }: { variants: Variant[]; onChange:
       {/* Add new variant row */}
       <div className="border border-dashed border-stone-200 p-4 space-y-3">
         <p className="text-xs font-semibold uppercase tracking-widest text-stone-400">Add variant</p>
-        <div className="flex gap-2">
-          {/* Label selector */}
+        <div className="flex gap-2 flex-wrap">
           {!customLabel ? (
-            <div className="flex gap-1 flex-wrap">
+            <>
               {LABEL_PRESETS.map(l => (
                 <button
                   key={l}
@@ -225,7 +283,7 @@ function VariantsEditor({ variants, onChange }: { variants: Variant[]; onChange:
                 onClick={() => { setCustomLabel(true); setNewLabel(''); }}
                 className="text-xs px-3 py-1.5 border border-dashed border-stone-300 text-stone-400 hover:text-stone-600 transition-colors"
               >Custom…</button>
-            </div>
+            </>
           ) : (
             <div className="flex gap-2 items-center">
               <input
@@ -254,7 +312,7 @@ function VariantsEditor({ variants, onChange }: { variants: Variant[]; onChange:
             className="px-4 py-2 bg-stone-900 text-white text-xs font-medium hover:bg-stone-700 transition-colors disabled:opacity-40"
           >Add</button>
         </div>
-        <p className="text-[11px] text-stone-400">Press Enter or click Add. Each value is one option (e.g. type &quot;Red&quot; then Add, then &quot;Blue&quot; then Add).</p>
+        <p className="text-[11px] text-stone-400">After adding, click the 🖻️ icon on each row to attach a photo for that option.</p>
       </div>
     </div>
   );
@@ -262,7 +320,6 @@ function VariantsEditor({ variants, onChange }: { variants: Variant[]; onChange:
 
 const inputCls = "w-full border border-stone-200 bg-white px-4 py-3 text-sm focus:outline-none focus:border-stone-500 transition-colors placeholder:text-stone-300";
 
-// Recursive tree builder for collections list
 function buildTree(all: Collection[]): (Collection & { children: Collection[] })[] {
   const map = new Map<string, Collection & { children: Collection[] }>();
   all.forEach(c => map.set(c.id, { ...c, children: [] }));
@@ -377,7 +434,6 @@ export default function AdminPage() {
     setTimeout(() => setMsg(null), 3000);
   };
 
-  // ── PRODUCT handlers ──
   const handleProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setSaving(true);
     const payload = {
@@ -393,8 +449,6 @@ export default function AdminPage() {
     const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     const data = await res.json();
     if (!res.ok) { setSaving(false); flash('Error: ' + (data.error || 'Something went wrong'), false); return; }
-
-    // Save variants via PUT (full replace)
     const productId = editingProduct ? editingProduct.id : data.id;
     if (productId) {
       await fetch(`/api/admin/products/${productId}/variants`, {
@@ -403,7 +457,6 @@ export default function AdminPage() {
         body: JSON.stringify({ variants }),
       });
     }
-
     setSaving(false);
     flash(editingProduct ? '✓ Product updated' : '✓ Product added');
     setProductForm({ ...EMPTY_PRODUCT }); setEditingProduct(null); setVariants([]); fetchProducts();
@@ -418,7 +471,6 @@ export default function AdminPage() {
       category: p.category || '', collection_id: p.collection_id || '',
       status: p.status, image_url: p.image_url || '',
     });
-    // Load existing variants
     const vRes = await fetch(`/api/admin/products/${p.id}/variants`);
     if (vRes.ok) setVariants(await vRes.json());
     else setVariants([]);
@@ -438,7 +490,6 @@ export default function AdminPage() {
     setProducts(prev => prev.map(x => x.id === p.id ? { ...x, status: newStatus } : x));
   };
 
-  // ── CATEGORY handlers ──
   const handleCategorySubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setSaving(true);
     const payload = {
@@ -484,7 +535,6 @@ export default function AdminPage() {
     }));
   };
 
-  // ── COLLECTION handlers ──
   const handleCollectionSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setSaving(true);
     const payload = {
@@ -540,7 +590,6 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-stone-50">
-      {/* Top bar */}
       <div className="bg-white border-b border-stone-200 sticky top-0 z-20">
         <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-6">
@@ -570,7 +619,6 @@ export default function AdminPage() {
 
       <div className="max-w-5xl mx-auto px-6 py-10">
 
-        {/* ── PRODUCTS LIST ── */}
         {tab === 'products' && (
           <div>
             <div className="flex items-center justify-between gap-4 mb-6">
@@ -638,7 +686,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ── ADD / EDIT PRODUCT ── */}
         {tab === 'add-product' && (
           <div>
             <div className="flex items-center justify-between mb-8">
@@ -728,11 +775,11 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* ── VARIANTS SECTION ── */}
+              {/* VARIANTS */}
               <div className="border-t border-stone-200 pt-8">
                 <div className="mb-4">
                   <h2 className="text-sm font-semibold uppercase tracking-widest text-stone-700">Variants</h2>
-                  <p className="text-xs text-stone-400 mt-1">Add options like Color, Size, or Type that customers can choose on the product page.</p>
+                  <p className="text-xs text-stone-400 mt-1">Add options like Color, Size, or Type. Each variant can have its own photo — click the image icon next to any row after adding it.</p>
                 </div>
                 <VariantsEditor variants={variants} onChange={setVariants} />
               </div>
@@ -751,7 +798,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ── CATEGORIES LIST ── */}
         {tab === 'categories' && (
           <div>
             <div className="flex items-center justify-between gap-4 mb-6">
@@ -808,7 +854,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ── ADD / EDIT CATEGORY ── */}
         {tab === 'add-category' && (
           <div>
             <div className="flex items-center justify-between mb-8">
@@ -863,7 +908,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ── COLLECTIONS LIST ── */}
         {tab === 'collections' && (
           <div>
             <div className="flex items-center justify-between gap-4 mb-6">
@@ -894,7 +938,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ── ADD / EDIT COLLECTION ── */}
         {tab === 'add-collection' && (
           <div>
             <div className="flex items-center justify-between mb-8">
