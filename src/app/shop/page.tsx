@@ -1,28 +1,25 @@
-import { createClient } from '@/lib/supabase/server';
+'use client';
+
+import { useEffect, useState } from 'react';
 import ProductCard from '@/components/ProductCard';
 import { Product } from '@/types/database';
 
-export const dynamic = 'force-dynamic';
+export default function ShopPage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
-export default async function ShopPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ gender?: string; category?: string }>;
-}) {
-  const { gender, category } = await searchParams;
-  const supabase = await createClient();
+  useEffect(() => {
+    setLoading(true);
+    fetch('/api/products')
+      .then(r => r.json())
+      .then(data => {
+        setProducts(Array.isArray(data) ? data : []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
 
-  let query = supabase
-    .from('products')
-    .select('*, product_images(*)')
-    .eq('status', 'active')
-    .order('created_at', { ascending: false });
-
-  if (gender) query = query.eq('gender', gender);
-  if (category) query = query.eq('category', category);
-
-  const { data: products } = await query;
-  const count = products?.length ?? 0;
+  const count = products.length;
 
   return (
     <div className="min-h-screen">
@@ -31,18 +28,24 @@ export default async function ShopPage({
         <div className="max-w-[1400px] mx-auto">
           <span className="eyebrow text-stone-400 block mb-3 fade-up">Browse</span>
           <h1 className="display fade-up-delay-1" style={{ fontSize: 'clamp(2rem, 4vw, 3rem)' }}>
-            {gender ? gender.charAt(0).toUpperCase() + gender.slice(1) : 'All Products'}
+            All Products
           </h1>
           <p className="eyebrow text-stone-400 mt-2 fade-up-delay-2">
-            {count} {count === 1 ? 'item' : 'items'}
+            {loading ? '...' : `${count} ${count === 1 ? 'item' : 'items'}`}
           </p>
         </div>
       </div>
 
       <div className="max-w-[1400px] mx-auto px-6 md:px-10 py-10">
-        {products && products.length > 0 ? (
+        {loading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {products.map((p: Product, i) => (
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="aspect-[3/4] bg-stone-100 animate-pulse rounded" />
+            ))}
+          </div>
+        ) : products.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {products.map((p: Product, i: number) => (
               <div
                 key={p.id}
                 className="reveal"
