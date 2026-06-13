@@ -4,10 +4,24 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { Product } from '@/types/database';
 
-export default function ProductCard({ product }: { product: Product }) {
+export default function ProductCard({
+  product,
+  selectedVariantId,
+}: {
+  product: Product;
+  selectedVariantId?: string | null;
+}) {
   const images = product.product_images || [];
-  const image1 = images[0]?.image_url;
-  const image2 = images[1]?.image_url;
+
+  // Per-variant image takes priority; fall back to product-level images
+  const variantImages = selectedVariantId
+    ? images.filter(img => img.variant_id === selectedVariantId)
+    : [];
+  const productImages = images.filter(img => img.variant_id === null);
+  const displayImages = variantImages.length > 0 ? variantImages : productImages;
+
+  const image1 = displayImages[0]?.image_url;
+  const image2 = displayImages[1]?.image_url;
   const [hovered, setHovered] = useState(false);
 
   // Guard against Postgres returning price as a string

@@ -24,6 +24,7 @@ export interface ProductVariant {
 export interface ProductImage {
   id: string;
   product_id: string;
+  variant_id: string | null;
   image_url: string;
   sort_order: number;
 }

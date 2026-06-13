@@ -37,15 +37,16 @@ export async function GET() {
   const supabase = getServiceSupabase();
   const { data, error } = await supabase
     .from('products')
-    .select('*, product_images(image_url, sort_order)')
+    .select('*, product_images(image_url, sort_order, variant_id)')
     .order('created_at', { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Flatten the first image URL so the admin thumbnail can read it directly
-  const products = (data ?? []).map((p: Record<string, unknown> & { product_images?: { image_url: string; sort_order: number }[] }) => {
+  // Flatten the first product-level image URL for the admin thumbnail
+  const products = (data ?? []).map((p: Record<string, unknown> & { product_images?: { image_url: string; sort_order: number; variant_id: string | null }[] }) => {
     const images = p.product_images ?? [];
-    const sorted = [...images].sort((a, b) => a.sort_order - b.sort_order);
+    const productImages = images.filter(img => img.variant_id === null);
+    const sorted = [...productImages].sort((a, b) => a.sort_order - b.sort_order);
     return { ...p, image_url: sorted[0]?.image_url ?? null };
   });
 
@@ -59,8 +60,8 @@ export async function POST(req: NextRequest) {
   const supabase = getServiceSupabase();
   const body = await req.json();
 
-  // Strip image_url — it belongs in product_images, not products
-  const { image_url, ...productPayload } = body;
+  // Strip image_url and variant_images — they belong in product_images, not products
+  const { image_url, variant_images, ...productPayload } = body;
 
   const { data, error } = await supabase
     .from('products')
@@ -70,11 +71,23 @@ export async function POST(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Insert the primary image into product_images
+  // Insert the product-level primary image
   if (image_url && data?.id) {
     await supabase.from('product_images').insert([
-      { product_id: data.id, image_url, sort_order: 0 },
+      { product_id: data.id, image_url, sort_order: 0, variant_id: null },
     ]);
+  }
+
+  // Insert per-variant images
+  if (variant_images?.length && data?.id) {
+    await supabase.from('product_images').insert(
+      (variant_images as { variant_id: string; image_url: string }[]).map((vi, i) => ({
+        product_id: data.id,
+        variant_id: vi.variant_id,
+        image_url: vi.image_url,
+        sort_order: i,
+      }))
+    );
   }
 
   return NextResponse.json(data);
