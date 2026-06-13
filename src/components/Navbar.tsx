@@ -8,8 +8,6 @@ import type { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 
 export default function Navbar() {
-  // Fix: select items array directly so Zustand re-renders on change,
-  // then derive count client-side to avoid SSR hydration mismatch.
   const items = useCartStore(state => state.items);
   const [cartCount, setCartCount] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -17,7 +15,6 @@ export default function Navbar() {
   const [accountOpen, setAccountOpen] = useState(false);
   const router = useRouter();
 
-  // Sync cart count after hydration to prevent SSR mismatch
   useEffect(() => {
     setCartCount(items.reduce((sum, i) => sum + i.quantity, 0));
   }, [items]);
@@ -31,14 +28,11 @@ export default function Navbar() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Close account dropdown when clicking outside
   useEffect(() => {
     if (!accountOpen) return;
     const handler = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (!target.closest('[data-account-menu]')) {
-        setAccountOpen(false);
-      }
+      if (!target.closest('[data-account-menu]')) setAccountOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -138,18 +132,32 @@ export default function Navbar() {
 
                   {accountOpen && (
                     <div className="absolute right-0 top-12 w-56 bg-paper border border-stone-200 shadow-xl z-50">
-                      {/* Email header */}
+                      {/* Email */}
                       <div className="px-4 py-3 border-b border-stone-100">
                         <p className="text-stone-400 truncate" style={{ fontSize: '0.7rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                           {user.email}
                         </p>
                       </div>
 
+                      {/* My Account */}
+                      <Link
+                        href="/account"
+                        onClick={() => setAccountOpen(false)}
+                        className="flex items-center gap-3 px-4 py-3.5 text-stone-600 hover:text-ink hover:bg-stone-50 transition-colors"
+                        style={{ fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 500 }}
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <circle cx="12" cy="8" r="4" />
+                          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+                        </svg>
+                        My Account
+                      </Link>
+
                       {/* My Orders */}
                       <Link
                         href="/orders"
                         onClick={() => setAccountOpen(false)}
-                        className="flex items-center gap-3 px-4 py-3.5 text-stone-600 hover:text-ink hover:bg-stone-50 transition-colors"
+                        className="flex items-center gap-3 px-4 py-3.5 text-stone-600 hover:text-ink hover:bg-stone-50 transition-colors border-t border-stone-100"
                         style={{ fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 500 }}
                       >
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -232,6 +240,10 @@ export default function Navbar() {
           </Link>
           {user ? (
             <>
+              <Link href="/account" onClick={() => setMenuOpen(false)}
+                className="display text-[2.4rem] text-ink py-4 border-b border-stone-200 hover:text-accent transition-colors">
+                My Account
+              </Link>
               <Link href="/orders" onClick={() => setMenuOpen(false)}
                 className="display text-[2.4rem] text-ink py-4 border-b border-stone-200 hover:text-accent transition-colors">
                 Orders
